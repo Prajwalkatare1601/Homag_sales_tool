@@ -148,7 +148,6 @@ export const FactoryCanvas = ({
           x: rect.left || 0,
           y: rect.top || 0,
           rotation: rect.angle || 0,
-          fabricId: rect.id,
         };
       });
 
