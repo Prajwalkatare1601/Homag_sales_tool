@@ -29,6 +29,7 @@ export const FactoryCanvas = ({
   const [dimensions, setDimensions] = useState({ width: 30, height: 20 });
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
   const PIXELS_PER_METER = 40;
+  const COLOR = "#d4c7c7ff"
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -36,7 +37,7 @@ export const FactoryCanvas = ({
     const canvas = new FabricCanvas(canvasRef.current, {
       width: dimensions.width * PIXELS_PER_METER,
       height: dimensions.height * PIXELS_PER_METER,
-      backgroundColor: "#ffffff",
+      backgroundColor: COLOR,
       selection: true,
     });
 
@@ -75,7 +76,7 @@ export const FactoryCanvas = ({
         top: 0,
         width: 1,
         height: dimensions.height * gridSize,
-        fill: "#e5e7eb",
+        fill: COLOR,
         selectable: false,
         evented: false,
       });
@@ -88,7 +89,7 @@ export const FactoryCanvas = ({
         top: i * gridSize,
         width: dimensions.width * gridSize,
         height: 1,
-        fill: "#e5e7eb",
+        fill: COLOR,
         selectable: false,
         evented: false,
       });
@@ -99,19 +100,20 @@ export const FactoryCanvas = ({
   const addMachineToCanvas = (machine: Machine) => {
     if (!fabricCanvas) return;
 
-    const machineRect = new Rect({
-      left: 100,
-      top: 100,
-      width: machine.width * PIXELS_PER_METER,
-      height: machine.height * PIXELS_PER_METER,
-      fill: machine.color,
-      opacity: 0.7,
-      stroke: machine.color,
-      strokeWidth: 2,
-      cornerColor: machine.color,
-      cornerSize: 8,
-      transparentCorners: false,
-    });
+ const machineRect = new Rect({
+  left: 100,
+  top: 100,
+  width: machine.width * PIXELS_PER_METER,
+  height: machine.height * PIXELS_PER_METER,
+  fill: "#3B82F6", // fixed blue color
+  opacity: 0.7,
+  stroke: "#3B82F6", // fixed stroke color
+  strokeWidth: 2,
+  cornerColor: "#3B82F6", // corner color also blue
+  cornerSize: 8,
+  transparentCorners: false,
+});
+
 
     const label = new Text(machine.name, {
       left: 100 + (machine.width * PIXELS_PER_METER) / 2,
