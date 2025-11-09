@@ -7,6 +7,8 @@ import { generateReport } from "@/components/factory/ReportGenerator";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 const Index = () => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
@@ -31,23 +33,26 @@ const Index = () => {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
       {/* === HEADER === */}
-<header className="bg-white shadow-md border-b border-slate-200 flex items-center justify-between px-8 py-4">
+<header className="bg-white shadow-md border-b border-slate-200 flex items-center justify-between px-8 py-0.5"
+  style={{ backgroundColor: "#001942" }}
+>
+
+  {/* Logo on Left */}
+  <img
+    src="/homag_logo.jpg"
+    alt="Homag India"
+    className="h-16 md:h-16 lg:h-16 w-auto object-contain ml-4"
+  />
   {/* Centered Title Section */}
   <div className="flex-1 flex flex-col items-center text-center">
-    <h1 className="text-2xl font-bold text-slate-800">
+    <h1 className="text-2xl font-bold text-slate-800 text-white">
       Factory Layout Planner
     </h1>
-    <p className="text-sm text-slate-500">
+    <p className="text-sm text-slate-500 text-white">
       Smart planning & productivity simulation by Homag India
     </p>
   </div>
 
-  {/* Logo on Right */}
-  <img
-    src="/homag_logo.jpg"
-    alt="Homag India"
-    className="h-16 w-auto object-contain ml-4"
-  />
 </header>
 
 
@@ -100,16 +105,22 @@ const Index = () => {
           transition={{ duration: 0.4 }}
           className="flex-1 min-w-0 p-4 flex flex-col"
         >
-          <div className="flex-1 bg-white rounded-2xl shadow-lg p-3 border border-slate-200">
-            <FactoryCanvas
-              selectedMachine={selectedMachine}
-              onMachinesUpdate={setPlacedMachines}
-              placedMachines={placedMachines}
-            />
-          </div>
-          <p className="text-xs text-slate-500 text-center mt-2">
-            Drag and drop machines to visualize your layout
-          </p>
+<ScrollArea
+  className="flex-1 rounded-2xl border border-slate-200 bg-white shadow-lg overflow-x-auto overflow-y-auto"
+>
+  <div className="inline-block min-w-full min-h-full p-3">
+    <FactoryCanvas
+      selectedMachine={selectedMachine}
+      onMachinesUpdate={setPlacedMachines}
+      placedMachines={placedMachines}
+    />
+    <p className="text-xs text-slate-500 text-center mt-2 whitespace-nowrap">
+      Drag and drop machines to visualize your layout
+    </p>
+  </div>
+</ScrollArea>
+
+
         </motion.div>
 
         {/* RIGHT PANEL — Productivity Metrics */}
