@@ -11,8 +11,12 @@ import {
 import Index from "./pages/Index";
 import Login from "./pages/Login"; // <-- Add this
 import NotFound from "./pages/NotFound";
+import TestPage from "./pages/test";  // <-- ADD THIS
+
 
 const queryClient = new QueryClient();
+
+
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -26,6 +30,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/test" element={<TestPage />} />   {/* <-- ADD THIS */}
           <Route path="/" element={<Login />} />
           <Route
             path="/authenticated"
