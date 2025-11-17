@@ -33,27 +33,38 @@ const Index = () => {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
       {/* === HEADER === */}
-<header className="bg-white shadow-md border-b border-slate-200 flex items-center justify-between px-8 py-0.5"
+<header
+  className="bg-white shadow-md border-b border-slate-200 flex items-center justify-between px-8 py-0.5"
   style={{ backgroundColor: "#001942" }}
 >
-
   {/* Logo on Left */}
   <img
     src="/homag_logo.jpg"
     alt="Homag India"
     className="h-16 md:h-16 lg:h-16 w-auto object-contain ml-4"
   />
+
   {/* Centered Title Section */}
   <div className="flex-1 flex flex-col items-center text-center">
-    <h1 className="text-2xl font-bold text-slate-800 text-white">
-      Factory Layout Planner
-    </h1>
-    <p className="text-sm text-slate-500 text-white">
+    <h1 className="text-2xl font-bold text-white">Factory Layout Planner</h1>
+    <p className="text-sm text-white/80">
       Smart planning & productivity simulation by Homag India
     </p>
   </div>
 
+  {/* Right Section — Logged-in User */}
+  <div className="flex items-center gap-3 mr-4">
+    {/* User Avatar (placeholder circle) */}
+    <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold text-slate-700 shadow-inner">
+      ad
+    </div>
+    <div className="flex flex-col text-right leading-tight">
+      <span className="text-sm font-medium text-white">admin</span>
+      <span className="text-[10px] text-slate-300">ID: HMG-1423</span>
+    </div>
+  </div>
 </header>
+
 
 
       {/* === MAIN LAYOUT === */}
@@ -99,29 +110,27 @@ const Index = () => {
           )}
         </motion.div>
 
-        {/* CENTER — Canvas Area */}
-        <motion.div
-          layout
-          transition={{ duration: 0.4 }}
-          className="flex-1 min-w-0 p-4 flex flex-col"
-        >
-<ScrollArea
-  className="flex-1 rounded-2xl border border-slate-200 bg-white shadow-lg overflow-x-auto overflow-y-auto"
+{/* CENTER — Canvas Area */}
+<motion.div
+  layout
+  transition={{ duration: 0.4 }}
+  className="flex-1 flex flex-col min-w-0 p-3 overflow-hidden"
 >
-  <div className="inline-block min-w-full min-h-full p-3">
-    <FactoryCanvas
-      selectedMachine={selectedMachine}
-      onMachinesUpdate={setPlacedMachines}
-      placedMachines={placedMachines}
-    />
-    <p className="text-xs text-slate-500 text-center mt-2 whitespace-nowrap">
-      Drag and drop machines to visualize your layout
-    </p>
+  <div className="flex-1 rounded-2xl border border-slate-200 bg-white shadow-lg overflow-auto">
+    <div className="inline-block min-w-max min-h-max p-3">
+      <FactoryCanvas
+        selectedMachine={selectedMachine}
+        onMachinesUpdate={setPlacedMachines}
+        placedMachines={placedMachines}
+      />
+      <p className="text-xs text-slate-500 text-center mt-2 whitespace-nowrap">
+        Drag and drop machines to visualize your layout
+      </p>
+    </div>
   </div>
-</ScrollArea>
+</motion.div>
 
 
-        </motion.div>
 
         {/* RIGHT PANEL — Productivity Metrics */}
         <motion.div

@@ -204,7 +204,7 @@ export const FactoryCanvas = ({
   };
 
   return (
-<div className="h-full flex flex-col bg-background ">
+<div className="h-full flex flex-col bg-background overflow-x-scroll">
   {/* === TOP CONTROL BAR === */}
   <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
     {/* Left Section — Factory Dimensions */}

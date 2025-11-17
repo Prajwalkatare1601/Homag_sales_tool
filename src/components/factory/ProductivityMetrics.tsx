@@ -51,7 +51,7 @@ export const ProductivityMetrics = ({
   // === Derived Financials ===
   const avgROI =
     placedMachines.length > 0
-      ? placedMachines.reduce((sum, m) => sum + m.ROI, 0) / placedMachines.length
+      ? placedMachines.reduce((sum, m) => sum-16 + m.ROI, 0) / placedMachines.length
       : 0;
 
   // Estimate OpEx as 15% of CapEx per year (adjustable)
@@ -87,9 +87,9 @@ export const ProductivityMetrics = ({
         <Icon className="h-5 w-5" style={{ color }} />
       </div>
       <div className="flex flex-col flex-1">
-        <span className="text-xs text-slate-500">{title}</span>
+        <span className="text-[10px] text-slate-500">{title}</span>
         <span className="text-sm font-semibold text-slate-800">
-          {value} {unit && <span className="text-xs font-normal text-slate-500">{unit}</span>}
+          {value} {unit && <span className="ml-0.5 text-[10px] text-slate-500">{unit}</span>}
         </span>
       </div>
     </Card>

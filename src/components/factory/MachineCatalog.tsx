@@ -18,6 +18,9 @@ interface MachineCatalogProps {
 export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
   const [segment, setSegment] = useState("Kitchen");
   const [solution, setSolution] = useState("Panel Dividing");
+  const [capacity, setCapacity] = useState("");
+  const [automation, setAutomation] = useState("");
+
 
   const filteredMachines = solution
     ? MACHINE_CATALOG.filter(
@@ -41,33 +44,72 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
                 <SelectValue placeholder="Select Segment" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Kitchen">Kitchen</SelectItem>
-                <SelectItem value="Cabinet">Cabinet</SelectItem>
-                <SelectItem value="Office Furniture">
-                  Office Furniture
-                </SelectItem>
+                <SelectItem value="Kitchen">Kitchen & Wardrobe</SelectItem>
                 <SelectItem value="Retail">Retail</SelectItem>
+                <SelectItem value="Office Furniture">Office Furniture</SelectItem>
+                <SelectItem value="Turnkey Interiors">Turnkey Interiors</SelectItem>
+                <SelectItem value="Doors">Doors</SelectItem>
+                <SelectItem value="School furniture">School furniture</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        {/* Capacity Selector */}
+        <div>
+          <label className="text-xs font-bold text-slate-600">
+            Capacity / Shift
+          </label>
+          <Select value={capacity} onValueChange={setCapacity}>
+            <SelectTrigger className="w-full bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 mt-0.5 py-1 text-xs h-7">
+              <SelectValue placeholder="Select Capacity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="50-100">50-100 boards (500-1000 components)</SelectItem>
+              <SelectItem value="100-200">100-200 boards (1000-2000 components)</SelectItem>
+              <SelectItem value="200-300">200-300 boards (2000-3000 components)</SelectItem>
+              <SelectItem value="300-400+">300-400+ boards (3000-4000+ components)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Degree of Automation Selector */}
+        <div>
+          <label className="text-xs font-bold text-slate-600">
+            Degree of Automation
+          </label>
+          <Select value={automation} onValueChange={setAutomation}>
+            <SelectTrigger className="w-full bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 mt-0.5 py-1 text-xs h-7">
+              <SelectValue placeholder="Select Automation Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Manual">Manual</SelectItem>
+              <SelectItem value="Semi-automatic">Semi Automatic</SelectItem>
+              <SelectItem value="Automatic">Automatic</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+
 
           {/* Homag Solutions Selector */}
-          <div>
-            <label className="text-xs font-bold text-slate-600">
-              Homag Solutions
-            </label>
-            <Select value={solution} onValueChange={setSolution}>
-              <SelectTrigger className="w-full bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 mt-0.5 py-1 text-xs h-7">
-                <SelectValue placeholder="Select Solution" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Panel Dividing">Panel Dividing</SelectItem>
-                <SelectItem value="Edge Bander">Edge Bander</SelectItem>
-                <SelectItem value="CNC machines">CNC Machines</SelectItem>
-                <SelectItem value="Automation">Automation</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <label className="text-xs font-bold text-slate-600">
+            Homag Solutions
+          </label>
+          <Select value={solution} onValueChange={setSolution}>
+            <SelectTrigger className="w-full bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 mt-0.5 py-1 text-xs h-7">
+              <SelectValue placeholder="Select Solution" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Press">Press</SelectItem>
+              <SelectItem value="Panel Dividing">Panel Dividing</SelectItem>
+              <SelectItem value="Edgeband">Edgeband</SelectItem>
+              <SelectItem value="CNC drilling">CNC Drilling</SelectItem>
+              <SelectItem value="Dust collector">Dust Collector</SelectItem>
+              <SelectItem value="Softwares">Softwares</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         </div>
       </div>
 
