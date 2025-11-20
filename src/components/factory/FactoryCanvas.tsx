@@ -90,53 +90,52 @@ export const FactoryCanvas = ({
     }
   };
 
-const addMachineToCanvas = (machine: Machine) => {
-  if (!fabricCanvas) return;
+  const addMachineToCanvas = (machine: Machine) => {
+    if (!fabricCanvas) return;
 
-  const rectWidth = (machine.dimension_length_mm ?? 1) * PIXELS_PER_METER;
-  const rectHeight = (machine.dimension_width_mm ?? 1) * PIXELS_PER_METER;
+    const rectWidth = machine.width_mm * PIXELS_PER_METER / 1000;
+    const rectHeight = machine.length_mm * PIXELS_PER_METER / 1000;
 
-  const machineRect = new Rect({
-    width: rectWidth/1000,
-    height: rectHeight/1000,
-    fill: "#3B82F6",
-    opacity: 0.7,
-    stroke: "#1D4ED8",
-    strokeWidth: 2,
-    rx: 4,
-    ry: 4,
-    originX: "center",
-    originY: "center",
-  });
+    const machineRect = new Rect({
+      width: rectWidth,
+      height: rectHeight,
+      fill: "#3B82F6",
+      opacity: 0.7,
+      stroke: "#1D4ED8",
+      strokeWidth: 2,
+      rx: 4,
+      ry: 4,
+      originX: "center",
+      originY: "center",
+    });
 
-  const label = new Text(machine.machine_name, {
-    fontSize: 12,
-    fill: "#ffffff",
-    fontWeight: "bold",
-    originX: "center",
-    originY: "center",
-  });
+    const label = new Text(machine.machine_name, {
+      fontSize: 12,
+      fill: "#ffffff",
+      fontWeight: "bold",
+      originX: "center",
+      originY: "center",
+    });
 
-  const group = new Group([machineRect, label], {
-    left: 100,
-    top: 100,
-    originX: "center",
-    originY: "center",
-    hasControls: true,
-    hasBorders: true,
-    lockScalingFlip: true,
-  });
+    const group = new Group([machineRect, label], {
+      left: 100,
+      top: 100,
+      originX: "center",
+      originY: "center",
+      hasControls: true,
+      hasBorders: true,
+      lockScalingFlip: true,
+    });
 
-  (group as any).machineData = machine;
+    (group as any).machineData = machine;
 
-  fabricCanvas.add(group);
-  fabricCanvas.setActiveObject(group);
-  fabricCanvas.renderAll();
+    fabricCanvas.add(group);
+    fabricCanvas.setActiveObject(group);
+    fabricCanvas.renderAll();
 
-  updatePlacedMachines();
-  toast.success(`${machine.machine_name} added to layout`);
-};
-
+    updatePlacedMachines();
+    toast.success(`${machine.machine_name} added to layout`);
+  };
 
   const updatePlacedMachines = () => {
     if (!fabricCanvas) return;

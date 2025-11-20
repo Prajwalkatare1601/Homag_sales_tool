@@ -1,28 +1,38 @@
-// types/machine.ts
-
 export interface Machine {
   id: number;
-  machine_name: string;
+  machine_name: string | null;
+
   type: string | null;
-  segment: string | null;
+  optionals: string | null;
 
-  dimension_length_mm: number | null;
-  dimension_width_mm: number | null;
-  dimension_height_mm?: number | null;
+  // Converted to numbers
+  length_mm: number | null;
+  width_mm: number | null;
 
-  automation_level?: string | null;
-  capacity_per_shift?: string | null;
+  price_capex: number | null;
+  price_opex: number | null;
 
-  image_url?: string | null;
-  description?: string | null;
+  roi_breakeven: number | null;
 
-  // === Productivity Metrics ===
-  productivity: number;        // boards/day
-  machineOperator: number;     // operators required
-  connectedLoad: number;       // kW
-  airConsumption: number;      // m²/min
-  capex: number;               // ₹ amount
-  ROI: number;                 // years
+  productivity_components: number | null;
+  productivity_boards: number | null;
+
+  connected_load_kw: number | null;
+  air_consumption_m3hr: number | null;
+
+  operator_count: number | null;
+  helper_count: number | null;
+
+  machine_spec: string | null;
+  youtube_link: string | null;
+
+  // Derived fields (these are already numbers 👍)
+  productivity?: number;
+  machineOperator?: number;
+  connectedLoad?: number;
+  airConsumption?: number;
+  capex?: number;
+  ROI?: number;
 }
 
 export interface PlacedMachine extends Machine {

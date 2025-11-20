@@ -105,9 +105,9 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
               <SelectContent>
                 <SelectItem value="Press">Press</SelectItem>
                 <SelectItem value="Panel Dividing">Panel Dividing</SelectItem>
-                <SelectItem value="Edge Bander">Edge Bander</SelectItem>
-                <SelectItem value="CNC Machines">CNC Machines</SelectItem>
-                <SelectItem value="Dust collector">Dust Collector</SelectItem>
+                <SelectItem value="Edgeband">Edge Bander</SelectItem>
+                <SelectItem value="CNC drilling">CNC Machines</SelectItem>
+                <SelectItem value="Dust collector (accessories)">Dust Collector</SelectItem>
                 <SelectItem value="Software">Software</SelectItem>
               </SelectContent>
             </Select>
