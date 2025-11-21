@@ -41,6 +41,15 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
     ? machines.filter((m) => m.type?.toLowerCase() === solution.toLowerCase())
     : machines;
 
+
+  const handleAddOptionals = (machine: Machine) => {
+  console.log("Add optionals for:", machine.machine_name);
+
+  // Later you can open modal / side panel here:
+  // setSelectedMachine(machine);
+  // setOptionalsOpen(true);
+};
+
   return (
     <div className="h-full w-70 flex flex-col bg-white border-r border-slate-100 shadow-inner">
       {/* === FILTER PANEL === */}
@@ -122,37 +131,51 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             <p className="text-center text-sm text-slate-500">Loading machines…</p>
           ) : filteredMachines.length === 0 ? (
             <p className="text-center text-sm text-slate-500">No machines found.</p>
-          ) : (
-            filteredMachines.map((machine) => (
-              <Card
-                key={machine.id}
-                className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all duration-200 rounded-lg border"
-                onClick={() => onMachineSelect(machine)}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 overflow-hidden">
-                    <img
-                      src="favicon.png"
-                      alt={machine.machine_name}
-                      className="object-contain w-full h-full"
-                    />
-                  </div>
+          ) : 
+          filteredMachines.map((machine) => (
+  <Card
+    key={machine.id}
+    className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all duration-200 rounded-lg border"
+    onClick={() => onMachineSelect(machine)}
+  >
+    <div className="flex items-center gap-2">
+      {/* Machine Icon */}
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 overflow-hidden">
+        <img
+          src="favicon.png"
+          alt={machine.machine_name}
+          className="object-contain w-full h-full"
+        />
+      </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-xs text-slate-800 truncate leading-tight">
-                      {machine.machine_name}
-                    </h3>
+      {/* Machine Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-xs text-slate-800 truncate leading-tight">
+          {machine.machine_name}
+        </h3>
 
-                    <div className="flex gap-1 mt-1">
-                      <Badge variant="secondary" className="text-[10px] rounded-full px-1.5 py-0">
-                        {machine.type}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))
-          )}
+        <div className="flex gap-1 mt-1">
+          <Badge variant="secondary" className="text-[10px] rounded-full px-1.5 py-0">
+            {machine.type}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Add Optionals Button */}
+      <button
+        className="text-[10px] px-2 py-1 rounded-md border border-blue-500 text-blue-600 
+                   hover:bg-blue-500 hover:text-white transition-all"
+        onClick={(e) => {
+          e.stopPropagation(); // prevent card click
+          handleAddOptionals(machine);
+        }}
+      >
+        Optionals
+      </button>
+    </div>
+  </Card>
+))
+          }
         </div>
       </ScrollArea>
     </div>

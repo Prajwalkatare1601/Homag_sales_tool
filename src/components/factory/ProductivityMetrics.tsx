@@ -48,7 +48,7 @@ export const ProductivityMetrics = ({
   const numMachines = placedMachines.length;
 
   const totalProductivity = placedMachines.reduce(
-    (sum, m) => sum + (m.productivity_boards ?? 0),
+    (sum, m) => sum + (m.productivity_boards_min ?? 0),
     0
   );
 
@@ -86,7 +86,7 @@ export const ProductivityMetrics = ({
   const avgROI =
     placedMachines.length > 0
       ? placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-        placedMachines.length
+      placedMachines.length
       : 0;
 
   // === Resource Estimates ===
