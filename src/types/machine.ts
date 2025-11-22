@@ -8,7 +8,7 @@ export interface Optional {
   created_at?: string;
 }
 
-// Accessories table (independent of machines)
+// Accessories table
 export interface Accessory {
   id: number;
   accessory_name: string;
@@ -17,6 +17,13 @@ export interface Accessory {
   created_at?: string;
 }
 
+// Softwares table
+export interface Software {
+  id: number;
+  software_name: string;
+  price: number | null;
+  created_at?: string;
+}
 
 // ==========================
 // Main Machine Interface
@@ -55,7 +62,7 @@ export interface Machine {
   youtube_link: string | null;
 
   // Relations
-  optionals?: Optional[];   // from optionals table
+  optionals?: Optional[];   
 
   created_at?: string;
 
@@ -71,7 +78,6 @@ export interface Machine {
   airConsumption?: number;
 }
 
-
 // ==========================
 // Placed Machine (for Canvas)
 // ==========================
@@ -80,7 +86,16 @@ export interface PlacedMachine extends Machine {
   y: number;
   rotation: number;
   scale?: number;
-  optionalsCost?: number
-  selectedOptionals?: { price: number }[]
-}
 
+  // Optionals
+  optionalsCost?: number;
+  selectedOptionals?: Optional[];
+
+  // Accessories
+  accessoriesCost?: number;
+  selectedAccessories?: Accessory[];
+
+  // Softwares
+  softwaresCost?: number;
+  selectedSoftwares?: Software[];
+}

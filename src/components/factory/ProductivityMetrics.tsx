@@ -47,10 +47,14 @@ export const ProductivityMetrics = ({
   // === Core Calculations ===
   const numMachines = placedMachines.length;
 
-  const totalProductivity = placedMachines.reduce(
-    (sum, m) => sum + (m.productivity_boards_min ?? 0),
-    0
-  );
+const totalProductivity =
+  numMachines > 0
+    ? placedMachines.reduce(
+        (sum, m) => sum + (m.productivity_components_min ?? 0),
+        0
+      ) / numMachines
+    : 0;
+
 
   const totalOperators = placedMachines.reduce(
     (sum, m) => sum + (m.operator_count ?? 0),
@@ -99,6 +103,13 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
   return sum;
 }, 0);
 
+const totalMachineArea = placedMachines.reduce((sum, m) => {
+  const length = m.length_mm ?? 0;
+  const width = m.width_mm ?? 0;
+  return sum + length * width;
+}, 0);
+
+
 
   
 
@@ -139,7 +150,7 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
         className="p-2 rounded-md flex items-center justify-center"
         style={{ backgroundColor: `${color}15` }}
       >
-        <Icon className="h-5 w-5" style={{ color }} />
+        <Icon className="h-3 w-3" style={{ color }} />
       </div>
       <div className="flex flex-col flex-1">
         <span className="text-[10px] text-slate-500">{title}</span>
@@ -174,18 +185,26 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
               color="#2563EB"
             />
             <MetricCard
-              title="Productivity"
+              title="Productivity Avg "
               value={totalProductivity}
               unit="boards/day"
               icon={TrendingUp}
               color="#0EA5E9"
             />
-            <MetricCard
-              title="Operators + Helpers"
-              value={totalOperators + totalHelpers}
-              icon={Users}
-              color="#059669"
-            />
+<MetricCard
+  title="Operators"
+  value={totalOperators}
+  icon={Users}
+  color="#059669"
+/>
+
+<MetricCard
+  title="Helpers"
+  value={totalHelpers}
+  icon={Users}
+  color="#0F766E"
+/>
+
           </div>
         </div>
 
@@ -198,12 +217,17 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
           <div className="grid grid-cols-2 gap-2">
             <MetricCard title="Connected Load" value={totalConnectedLoad} unit="kW" icon={Plug} color="#6366F1" />
             <MetricCard title="Air Consumption" value={totalAirConsumption} unit="m³/min" icon={Wind} color="#10B981" />
-            <MetricCard title="Glue Consumption" value={glueConsumption} unit="ltr/day" icon={Droplets} color="#06B6D4" />
-            <MetricCard title="Band Consumption" value={bandConsumption} unit="m/day" icon={Package} color="#F59E0B" />
-          </div>
+            <MetricCard
+  title="Total Machine Area"
+  value={(totalMachineArea / 1_000_000).toFixed(2)}
+  unit="m²"
+  icon={Package}
+  color="#EF4444"
+/>
+
+</div>
         </div>
 
-        {/* Financial Section */}
         {/* Financial Section */}
 <div>
   <h3 className="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
@@ -242,7 +266,7 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
     />
 
     <MetricCard 
-      title="ROI Period" 
+      title="Estimated ROI Period" 
       value={`${avgROI.toFixed(1)} years`} 
       icon={TrendingUp} 
       color="#059669" 
@@ -251,18 +275,95 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
   </div>
 </div>
 
-        <div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-amber-600" />
-            Financial Summary
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-            <MetricCard title="CapEx (Capital)" value={(totalCapex)} icon={Wallet} color="#D97706" />
-            <MetricCard title="OpEx (Annual)" value={(totalOpex)} icon={Coins} color="#FACC15" />
-            <MetricCard title="Total Estimated Budget" value={(totalCapex + totalOpex)} icon={Wallet} color="#EAB308" />
-            <MetricCard title="ROI Period" value={`${avgROI.toFixed(1)} years`} icon={TrendingUp} color="#059669" />
-          </div>
-        </div>
+{/* ===== Selections Summary Card ===== */}
+<Card className="border border-slate-200 shadow-sm bg-gradient-to-br from-white to-slate-50">
+  <div className="p-3">
+    <h3 className="text-sm font-semibold text-slate-600 mb-3 flex items-center gap-2">
+      <Package className="h-4 w-4 text-indigo-600" />
+      Selected Configuration Summary
+    </h3>
+
+    <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 text-[12px]">
+
+      {/* === MACHINES === */}
+      <div>
+        <p className="font-medium text-slate-700 mb-1">Machines</p>
+        <ul className="space-y-1">
+          {placedMachines.map((m, idx) => (
+            <li
+              key={idx}
+              className="bg-slate-100 rounded-md px-2 py-1 text-slate-700"
+            >
+              {m.machine_name}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* === OPTIONALS === */}
+      <div>
+        <p className="font-medium text-slate-700 mb-1">Optionals</p>
+        <ul className="space-y-1">
+          {placedMachines.some(m => m.selectedOptionals?.length) ? (
+            placedMachines.flatMap(m => m.selectedOptionals || []).map((opt, idx) => (
+              <li
+                key={idx}
+                className="bg-indigo-50 text-indigo-700 rounded-md px-2 py-1"
+              >
+                {opt.optional_name} – ₹{opt.price}
+              </li>
+            ))
+          ) : (
+            <li className="text-slate-400 italic">No optionals selected</li>
+          )}
+        </ul>
+      </div>
+
+      {/* === ACCESSORIES === */}
+      <div>
+        <p className="font-medium text-slate-700 mb-1">Accessories</p>
+        <ul className="space-y-1">
+          {placedMachines.some(m => m.selectedAccessories?.length) ? (
+            placedMachines.flatMap(m => m.selectedAccessories || []).map((acc, idx) => (
+              <li
+                key={idx}
+                className="bg-emerald-50 text-emerald-700 rounded-md px-2 py-1"
+              >
+                {acc.accessory_name} – ₹{acc.price}
+              </li>
+            ))
+          ) : (
+            <li className="text-slate-400 italic">No accessories selected</li>
+          )}
+        </ul>
+      </div>
+
+      {/* === SOFTWARES === */}
+      <div>
+        <p className="font-medium text-slate-700 mb-1">Softwares</p>
+        <ul className="space-y-1">
+          {placedMachines.some(m => m.selectedSoftwares?.length) ? (
+            placedMachines.flatMap(m => m.selectedSoftwares || []).map((soft, idx) => (
+              <li
+                key={idx}
+                className="bg-purple-50 text-purple-700 rounded-md px-2 py-1"
+              >
+                {soft.software_name} – ₹{soft.price}
+              </li>
+            ))
+          ) : (
+            <li className="text-slate-400 italic">No software selected</li>
+          )}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</Card>
+
+
+
+
 
         {/* Finance Partners */}
         <Card className="border border-slate-200 shadow-sm bg-gradient-to-br from-white to-slate-50">

@@ -3,7 +3,7 @@ import supabase from "./server";
 
 export async function getMachines(): Promise<Machine[]> {
   const { data, error } = await supabase
-    .from("machines")
+    .from("machines2") // ✅ NEW TABLE
     .select("*")
     .order("machine_name", { ascending: true });
 
@@ -15,22 +15,33 @@ export async function getMachines(): Promise<Machine[]> {
   const machines: Machine[] = (data || []).map((m: any) => ({
     ...m,
 
-    length_mm: m.length_mm ? parseFloat(m.length_mm) : null,
-    width_mm: m.width_mm ? parseFloat(m.width_mm) : null,
+    // Dimensions
+    length_mm: m.length_mm ? parseInt(m.length_mm) : null,
+    width_mm: m.width_mm ? parseInt(m.width_mm) : null,
 
+    // Financials
     price_capex: m.price_capex ? parseFloat(m.price_capex) : null,
     price_opex: m.price_opex ? parseFloat(m.price_opex) : null,
-
     roi_breakeven: m.roi_breakeven ? parseFloat(m.roi_breakeven) : null,
 
-    productivity_components: m.productivity_components
-      ? parseFloat(m.productivity_components)
+    // ✅ FIXED: Productivity fields
+    productivity_components_min: m.productivity_components_min
+      ? parseInt(m.productivity_components_min)
       : null,
 
-    productivity_boards: m.productivity_boards
-      ? parseFloat(m.productivity_boards)
+    productivity_components_max: m.productivity_components_max
+      ? parseInt(m.productivity_components_max)
       : null,
 
+    productivity_boards_min: m.productivity_boards_min
+      ? parseInt(m.productivity_boards_min)
+      : null,
+
+    productivity_boards_max: m.productivity_boards_max
+      ? parseInt(m.productivity_boards_max)
+      : null,
+
+    // Utilities
     connected_load_kw: m.connected_load_kw
       ? parseFloat(m.connected_load_kw)
       : null,
@@ -39,6 +50,7 @@ export async function getMachines(): Promise<Machine[]> {
       ? parseFloat(m.air_consumption_m3hr)
       : null,
 
+    // Manpower
     operator_count: m.operator_count
       ? parseInt(m.operator_count)
       : null,
@@ -50,4 +62,3 @@ export async function getMachines(): Promise<Machine[]> {
 
   return machines;
 }
-
