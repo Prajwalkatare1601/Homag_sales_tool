@@ -80,4 +80,7 @@ export interface PlacedMachine extends Machine {
   y: number;
   rotation: number;
   scale?: number;
+  optionalsCost?: number
+  selectedOptionals?: { price: number }[]
 }
+

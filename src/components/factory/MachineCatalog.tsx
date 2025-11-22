@@ -39,9 +39,27 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
   const [optionalsOpen, setOptionalsOpen] = useState(false);
   const [optionalsLoading, setOptionalsLoading] = useState(false);
 
-  
+  const [selectedOptionals, setSelectedOptionals] = useState<Optional[]>([]);
+  const [optionalsTotal, setOptionalsTotal] = useState<number>(0);
 
-  // Fetch machines
+  const toggleOptional = (optional: Optional) => {
+    setSelectedOptionals((prev) => {
+      const exists = prev.find((o) => o.id === optional.id);
+      let updated;
+
+      if (exists) {
+        updated = prev.filter((o) => o.id !== optional.id);
+      } else {
+        updated = [...prev, optional];
+      }
+
+      const total = updated.reduce((sum, opt) => sum + Number(opt.price), 0);
+      setOptionalsTotal(total);
+
+      return updated;
+    });
+  };
+
   useEffect(() => {
     async function load() {
       const data = await getMachines();
@@ -51,14 +69,16 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
     load();
   }, []);
 
-  // Filter machines based on solution
   const filteredMachines = solution
-    ? machines.filter((m) => m.type?.toLowerCase() === solution.toLowerCase())
+    ? machines.filter(
+        (m) => m.type?.toLowerCase() === solution.toLowerCase()
+      )
     : machines;
 
-  // Fetch optionals when button clicked
   const handleAddOptionals = async (machine: Machine) => {
     setSelectedMachine(machine);
+    setSelectedOptionals([]);   // ✅ Reset previous data
+    setOptionalsTotal(0);
     setOptionalsOpen(true);
     setOptionalsLoading(true);
 
@@ -71,11 +91,10 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
   return (
     <div className="h-full w-70 flex flex-col bg-white border-r border-slate-100 shadow-inner">
 
-      {/* === FILTER PANEL === */}
+      {/* FILTER PANEL */}
       <div className="p-2 border-b border-slate-200 bg-slate-50">
         <div className="space-y-1">
 
-          {/* SEGMENT */}
           <div>
             <label className="text-xs font-bold text-slate-600">Segment</label>
             <Select value={segment} onValueChange={setSegment}>
@@ -93,7 +112,6 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             </Select>
           </div>
 
-          {/* CAPACITY */}
           <div>
             <label className="text-xs font-bold text-slate-600">Capacity / Shift</label>
             <Select value={capacity} onValueChange={setCapacity}>
@@ -109,12 +127,11 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             </Select>
           </div>
 
-          {/* AUTOMATION */}
           <div>
             <label className="text-xs font-bold text-slate-600">Automation</label>
             <Select value={automation} onValueChange={setAutomation}>
               <SelectTrigger className="w-full h-7 text-xs">
-                <SelectValue placeholder="Select Automation Level" />
+                <SelectValue placeholder="Select Automation" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Manual">Manual</SelectItem>
@@ -124,7 +141,6 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             </Select>
           </div>
 
-          {/* SOLUTION */}
           <div>
             <label className="text-xs font-bold text-slate-600">Homag Solutions</label>
             <Select value={solution} onValueChange={setSolution}>
@@ -145,9 +161,9 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
         </div>
       </div>
 
-      {/* === MACHINE LIST === */}
+      {/* MACHINE LIST */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-3 ">
+        <div className="p-4 space-y-3">
           {loading ? (
             <p className="text-center text-sm text-slate-500">Loading machines…</p>
           ) : filteredMachines.length === 0 ? (
@@ -156,38 +172,31 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             filteredMachines.map((machine) => (
               <Card
                 key={machine.id}
-                className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all duration-200 rounded-lg border"
+                className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all rounded-lg border"
                 onClick={() => onMachineSelect(machine)}
               >
                 <div className="flex items-center gap-2">
-
-                  {/* ICON */}
-                  <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 overflow-hidden">
-                    <img src="favicon.png" alt={machine.machine_name} className="object-contain w-full h-full" />
+                  <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100">
+                    <img src="favicon.png" className="object-contain w-full h-full" />
                   </div>
 
-                  {/* INFO */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-xs text-slate-800 truncate leading-tight">
-                      {machine.machine_name}
-                    </h3>
-                    <div className="flex gap-1 mt-1">
-                      <Badge variant="secondary" className="text-[10px] rounded-full px-1.5 py-0">
-                        {machine.type}
-                      </Badge>
-                    </div>
-                  </div>
+ <div className="flex-1 min-w-0">
+  <h3 className="font-medium text-[10px] truncate">
+    {machine.machine_name}
+  </h3>
 
-                  {/* OPTION BUTTON */}
-                  <button
-                    className="text-[10px] px-2 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddOptionals(machine);
-                    }}
-                  >
-                    Optionals
-                  </button>
+  <button
+    className="mt-1 text-[9px] px-1.5 py-0.5 rounded border border-blue-500 
+               text-blue-600 hover:bg-blue-500 hover:text-white w-fit"
+    onClick={(e) => {
+      e.stopPropagation();
+      handleAddOptionals(machine);
+    }}
+  >
+    Optionals
+  </button>
+</div>
+
                 </div>
               </Card>
             ))
@@ -195,7 +204,7 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
         </div>
       </ScrollArea>
 
-      {/* === OPTION MODAL === */}
+      {/* OPTION MODAL */}
       <Dialog open={optionalsOpen} onOpenChange={setOptionalsOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -210,25 +219,63 @@ export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
             <p className="text-sm text-slate-500">No optionals available.</p>
           ) : (
             <div className="space-y-2">
-              {optionals.map((opt) => (
-                <div 
-                  key={opt.id} 
-                  className="border rounded-md p-2 hover:bg-slate-50"
-                >
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium text-sm">{opt.optional_name}</p>
-                    <p className="text-xs text-green-600 font-semibold">₹{opt.price}</p>
+              {optionals.map((opt) => {
+                const isChecked = selectedOptionals.some((o) => o.id === opt.id);
+
+                return (
+                  <div key={opt.id} className="flex gap-2 border p-2 rounded-md">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleOptional(opt)}
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between">
+                        <p className="text-sm font-medium">{opt.optional_name}</p>
+                        <p className="text-xs text-green-600 font-semibold">₹{opt.price}</p>
+                      </div>
+                      {opt.features && (
+                        <p className="text-xs text-slate-500 mt-1">{opt.features}</p>
+                      )}
+                    </div>
                   </div>
-                  {opt.features && (
-                    <p className="text-xs text-slate-500 mt-1">{opt.features}</p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+
+          {/* ADD MACHINE BUTTON */}
+          <div className="pt-4 border-t mt-3 flex justify-between items-center">
+            <div className="text-sm font-semibold text-slate-600">
+              Optionals Total: 
+              <span className="ml-1 text-green-600">
+                ₹{optionalsTotal.toLocaleString()}
+              </span>
+            </div>
+
+            <button
+              className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-all"
+              onClick={() => {
+                if (!selectedMachine) return;
+
+                onMachineSelect({
+                  ...selectedMachine,
+                  selectedOptionals,
+                  optionalsCost: optionalsTotal
+                } as Machine);
+
+                setOptionalsOpen(false);
+              }}
+            >
+              Add Machine
+            </button>
+          </div>
+
         </DialogContent>
       </Dialog>
 
     </div>
+
+    
   );
 };

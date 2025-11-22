@@ -82,6 +82,26 @@ export const ProductivityMetrics = ({
     0
   );
 
+  // === Total Optionals Cost ===
+const totalOptionalsCost = placedMachines.reduce((sum, m) => {
+  // If you stored optionalsCost directly
+  if (m.optionalsCost) return sum + Number(m.optionalsCost);
+
+  // If you only stored selectedOptionals[]
+  if (m.selectedOptionals && Array.isArray(m.selectedOptionals)) {
+    const optCost = m.selectedOptionals.reduce(
+      (s: number, o: any) => s + Number(o.price ?? 0),
+      0
+    );
+    return sum + optCost;
+  }
+
+  return sum;
+}, 0);
+
+
+  
+
   // === Derived Financials ===
   const avgROI =
     placedMachines.length > 0
@@ -184,6 +204,53 @@ export const ProductivityMetrics = ({
         </div>
 
         {/* Financial Section */}
+        {/* Financial Section */}
+<div>
+  <h3 className="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+    <Wallet className="h-4 w-4 text-amber-600" />
+    Financial Summary
+  </h3>
+
+  <div className="grid grid-cols-2 gap-2">
+
+    <MetricCard 
+      title="CapEx (Capital)" 
+      value={totalCapex} 
+      icon={Wallet} 
+      color="#D97706" 
+    />
+
+    <MetricCard 
+      title="Optionals Cost" 
+      value={totalOptionalsCost} 
+      icon={Coins} 
+      color="#9333EA" 
+    />
+
+    <MetricCard 
+      title="OpEx (Annual)" 
+      value={totalOpex} 
+      icon={Coins} 
+      color="#FACC15" 
+    />
+
+    <MetricCard 
+      title="Total Estimated Budget" 
+      value={totalCapex + totalOpex + totalOptionalsCost} 
+      icon={Wallet} 
+      color="#EAB308" 
+    />
+
+    <MetricCard 
+      title="ROI Period" 
+      value={`${avgROI.toFixed(1)} years`} 
+      icon={TrendingUp} 
+      color="#059669" 
+    />
+
+  </div>
+</div>
+
         <div>
           <h3 className="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
             <Wallet className="h-4 w-4 text-amber-600" />
