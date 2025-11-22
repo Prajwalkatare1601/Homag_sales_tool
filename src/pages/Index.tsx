@@ -123,9 +123,6 @@ const Index = () => {
         onMachinesUpdate={setPlacedMachines}
         placedMachines={placedMachines}
       />
-      <p className="text-xs text-slate-500 text-center mt-2 whitespace-nowrap">
-        Drag and drop machines to visualize your layout
-      </p>
     </div>
   </div>
 </motion.div>

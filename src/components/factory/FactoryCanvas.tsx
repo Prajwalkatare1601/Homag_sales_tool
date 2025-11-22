@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Group } from "fabric";
-import { generateReport } from "./ReportGenerator.tsx"; // ✅ import the report generator
+import { generateReport } from "./ReportGenerator.tsx";
 
 interface FactoryCanvasProps {
   selectedMachine: Machine | null;
@@ -29,8 +29,16 @@ export const FactoryCanvas = ({
 }: FactoryCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+
+  // TRUE = meters, FALSE = feet
+  const [useMeters, setUseMeters] = useState(true);
+
+  const convertToMeters = (value: number) => (useMeters ? value : value / 3.28084);
+  const convertFromMeters = (value: number) => (useMeters ? value : value * 3.28084);
+
   const [dimensions, setDimensions] = useState({ width: 30, height: 20 });
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
+
   const PIXELS_PER_METER = 40;
   const COLOR = "#d4c7c7ff";
 
@@ -186,16 +194,6 @@ export const FactoryCanvas = ({
     }
   };
 
-  const handleDimensionChange = () => {
-    if (fabricCanvas) {
-      fabricCanvas.clear();
-      fabricCanvas.setWidth(dimensions.width * PIXELS_PER_METER);
-      fabricCanvas.setHeight(dimensions.height * PIXELS_PER_METER);
-      drawGrid(fabricCanvas);
-      fabricCanvas.renderAll();
-      toast.success("Layout dimensions updated");
-    }
-  };
 
   const handleGenerateReport = async () => {
     if (canvasRef.current) {
@@ -204,39 +202,73 @@ export const FactoryCanvas = ({
   };
 
   return (
-<div className="h-full flex flex-col bg-background overflow-x-scroll">
+<div className="flex flex-col h-full bg-background overflow-x-scroll">
+
   {/* === TOP CONTROL BAR === */}
   <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
-    {/* Left Section — Factory Dimensions */}
+
+    {/* DIMENSIONS SECTION */}
     <div className="flex flex-wrap items-center gap-3">
       <h2 className="text-sm font-semibold text-slate-700">Factory Floor Dimension</h2>
 
+      {/* Width */}
       <div className="flex items-center gap-2">
-        <Label htmlFor="width" className="text-xs font-medium text-slate-600">Width (m):</Label>
+        <Label htmlFor="width" className="text-xs font-medium text-slate-600">
+          Width ({useMeters ? "m" : "ft"}):
+        </Label>
         <Input
           id="width"
           type="number"
-          value={dimensions.width}
-          onChange={(e) => setDimensions((prev) => ({ ...prev, width: Number(e.target.value) }))}
+          value={convertFromMeters(dimensions.width)}
+          onChange={(e) =>
+            setDimensions((prev) => ({
+              ...prev,
+              width: convertToMeters(Number(e.target.value)),
+            }))
+          }
           className="w-20 text-xs py-1"
         />
       </div>
 
+      {/* Height */}
       <div className="flex items-center gap-2">
-        <Label htmlFor="height" className="text-xs font-medium text-slate-600">Height (m):</Label>
+        <Label htmlFor="height" className="text-xs font-medium text-slate-600">
+          Height ({useMeters ? "m" : "ft"}):
+        </Label>
         <Input
           id="height"
           type="number"
-          value={dimensions.height}
-          onChange={(e) => setDimensions((prev) => ({ ...prev, height: Number(e.target.value) }))}
+          value={convertFromMeters(dimensions.height)}
+          onChange={(e) =>
+            setDimensions((prev) => ({
+              ...prev,
+              height: convertToMeters(Number(e.target.value)),
+            }))
+          }
           className="w-20 text-xs py-1"
         />
       </div>
 
-      <Button onClick={handleDimensionChange} size="sm" className="text-xs">Apply</Button>
+<p className="text-xs text-slate-500 text-center">
+  (
+    {Math.round(dimensions.width * dimensions.height)} m² /
+    {Math.round(dimensions.width * dimensions.height * 10.7639)} ft²
+  )
+</p>
+
+
+      {/* UNIT TOGGLE BUTTON */}
+      <Button
+        onClick={() => setUseMeters((prev) => !prev)}
+        size="sm"
+        variant="secondary"
+        className="text-xs"
+      >
+        {useMeters ? "Switch to Feet" : "Switch to Meters"}
+      </Button>
     </div>
 
-    {/* Right Section — Canvas Controls */}
+    {/* CANVAS CONTROLS */}
     <div className="flex items-center gap-2">
       <Button variant="outline" size="icon" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
       <Button variant="outline" size="icon" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
@@ -249,14 +281,13 @@ export const FactoryCanvas = ({
         </>
       )}
 
-      {/* ✅ Generate PDF Report */}
       <Button onClick={handleGenerateReport} variant="outline" size="icon" title="Generate Report">
         <FileDown className="h-4 w-4" />
       </Button>
     </div>
   </div>
 
-  {/* === MAIN CANVAS === */}
+  {/* MAIN CANVAS */}
   <div className="flex-1 overflow-auto p-4 bg-muted/30">
     <div className="flex items-center justify-center min-h-full">
       <div className="rounded-lg overflow-hidden bg-white border-4 border-black shadow-lg">
@@ -265,12 +296,7 @@ export const FactoryCanvas = ({
     </div>
   </div>
 
-  {/* === FOOTER INFO BAR === */}
-  <div className="p-2 border-t border-slate-200 bg-slate-50">
-    <p className="text-xs text-slate-500 text-center">
-      {placedMachines.length} machine(s) placed | Layout: {dimensions.width}m × {dimensions.height}m ({dimensions.width * dimensions.height} m²)
-    </p>
-  </div>
+
 </div>
   );
 };
