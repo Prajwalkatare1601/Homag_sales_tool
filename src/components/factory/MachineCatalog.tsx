@@ -229,36 +229,69 @@ return (
                   <p className="text-center text-sm text-slate-500">No machines found.</p>
                 ) : (
                   filteredMachines.map((machine) => (
-                    <Card
-                      key={machine.id}
-                      className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all rounded-lg border"
-                      onClick={() => onMachineSelect(machine)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100">
-                          <img src="favicon.png" className="object-contain w-full h-full" />
-                        </div>
+<Card
+  key={machine.id}
+  className="p-2 cursor-pointer hover:shadow-md hover:bg-blue-50/40 transition-all rounded-lg border"
+  onClick={() => onMachineSelect(machine)}
+>
+  <div className="flex items-center gap-2">
 
-                        <div className="flex-1">
-                          <h3 className="font-medium text-xs truncate">
-                            {machine.machine_name}
-                          </h3>
-                          <Badge variant="secondary" className="text-[10px] mt-1">
-                            {machine.type}
-                          </Badge>
-                        </div>
+    {/* Thumbnail */}
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100">
+      <img src="favicon.png" className="object-contain w-full h-full" />
+    </div>
 
-                        <button
-                          className="text-[10px] px-2 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddOptionals(machine);
-                          }}
-                        >
-                          Optionals
-                        </button>
-                      </div>
-                    </Card>
+    {/* Main Area */}
+    <div className="flex-1">
+      <h3 className="font-medium text-xs truncate">
+        {machine.machine_name}
+      </h3>
+
+      {/* Action Buttons Row */}
+      <div className="flex items-center gap-1 mt-1">
+
+        {/* YOUTUBE button */}
+        {machine.youtube_link && (
+          <button
+            className="text-[10px] px-2 py-0.5 rounded border text-red-600 border-red-400 hover:bg-red-500 hover:text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(machine.youtube_link, "_blank");
+            }}
+          >
+            YouTube
+          </button>
+        )}
+
+        {/* SPEC button */}
+        {machine.machine_spec && (
+          <button
+            className="text-[10px] px-2 py-0.5 rounded border text-green-600 border-green-400 hover:bg-green-500 hover:text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(machine.machine_spec, "_blank");
+            }}
+          >
+            Spec
+          </button>
+        )}
+
+      </div>
+    </div>
+
+    {/* OPTIONALS Button */}
+    <button
+      className="text-[10px] px-2 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleAddOptionals(machine);
+      }}
+    >
+      Optionals
+    </button>
+  </div>
+</Card>
+
                   ))
                 )}
               </div>
