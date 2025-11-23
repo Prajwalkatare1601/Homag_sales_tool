@@ -5,6 +5,7 @@ import {
   Text,
   FabricObject,
   Group,
+  Line,
 } from "fabric";
 import { Machine, PlacedMachine } from "@/types/machine";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,108 @@ export const FactoryCanvas = ({
   //
   // Helpers: convert between Fabric canvas coords and user Cartesian (bottom-left origin)
   //
+
+
+
+  const getBoundingEdges = (obj: Group) => {
+  const rect = obj.getBoundingRect();
+  return {
+    left: rect.left,
+    right: rect.left + rect.width,
+    top: rect.top,
+    bottom: rect.top + rect.height,
+  };
+};
+const getEdgeDistance = (a: Group, b: Group) => {
+  const eA = getBoundingEdges(a);
+  const eB = getBoundingEdges(b);
+
+  // Horizontal distance
+  let dx = 0;
+  if (eA.right < eB.left) dx = eB.left - eA.right;       // A is left of B
+  else if (eB.right < eA.left) dx = eA.left - eB.right;  // B is left of A
+  else dx = 0; // overlapping horizontally
+
+  // Vertical distance
+  let dy = 0;
+  if (eA.bottom < eB.top) dy = eB.top - eA.bottom;       // A is above B
+  else if (eB.bottom < eA.top) dy = eA.top - eB.bottom;  // B is above A
+  else dy = 0; // overlapping vertically
+
+  return { dx, dy };
+};
+const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
+  canvas.getObjects()
+    .filter((obj: any) => obj.isDistanceLine)
+    .forEach(obj => canvas.remove(obj));
+
+  const objects = canvas.getObjects().filter((o: any) => o.machineData) as Group[];
+
+  for (let i = 0; i < objects.length; i++) {
+    for (let j = i + 1; j < objects.length; j++) {
+      const objA = objects[i];
+      const objB = objects[j];
+
+      const { dx, dy } = getEdgeDistance(objA, objB);
+
+      if (dx === 0 && dy === 0) continue; // overlapping, no distance line needed
+
+      // Determine line start/end: horizontal, vertical, or diagonal
+      const eA = getBoundingEdges(objA);
+      const eB = getBoundingEdges(objB);
+
+      let startX = 0, startY = 0, endX = 0, endY = 0;
+
+      if (dx === 0) { // vertical line
+        startX = (Math.max(eA.left, eB.left) + Math.min(eA.right, eB.right)) / 2;
+        startY = eA.bottom < eB.top ? eA.bottom : eA.top;
+        endX = startX;
+        endY = eA.bottom < eB.top ? eB.top : eB.bottom;
+      } else if (dy === 0) { // horizontal line
+        startY = (Math.max(eA.top, eB.top) + Math.min(eA.bottom, eB.bottom)) / 2;
+        startX = eA.right < eB.left ? eA.right : eA.left;
+        endY = startY;
+        endX = eA.right < eB.left ? eB.left : eB.right;
+      } else { // diagonal
+        startX = eA.right < eB.left ? eA.right : eA.left;
+        startY = eA.bottom < eB.top ? eA.bottom : eA.top;
+        endX = eA.right < eB.left ? eB.left : eB.right;
+        endY = eA.bottom < eB.top ? eB.top : eB.bottom;
+      }
+
+      const distanceMeters = Math.sqrt(dx * dx + dy * dy) / PIXELS_PER_METER;
+      const displayDistance = useMeters ? distanceMeters : distanceMeters * 3.28084;
+
+      const line = new Line([startX, startY, endX, endY], {
+        stroke: "red",
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+      });
+      (line as any).isDistanceLine = true;
+      canvas.add(line);
+
+      const midX = (startX + endX) / 2;
+      const midY = (startY + endY) / 2;
+
+      const text = new Text(displayDistance.toFixed(2) + (useMeters ? "m" : "ft"), {
+        left: midX,
+        top: midY-10,
+        fontSize: 14,
+        fill: "black",
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        evented: false,
+      });
+      (text as any).isDistanceLine = true;
+      canvas.add(text);
+    }
+  }
+
+  canvas.requestRenderAll();
+};
+
 
   // Fabric Group -> Cartesian bottom-left (returns in meters)
   const fabricToCartesian = (obj: Group) => {
@@ -144,9 +247,12 @@ export const FactoryCanvas = ({
         }
       }
       checkCollisions(canvas);
+      drawEdgeDistanceLines(canvas)
     });
 
-    canvas.on("object:rotating", () => checkCollisions(canvas));
+    canvas.on("object:rotating", () => {checkCollisions(canvas);
+      drawEdgeDistanceLines(canvas)
+    });
     canvas.on("object:scaling", () => checkCollisions(canvas));
 
     return () => {
@@ -274,6 +380,7 @@ export const FactoryCanvas = ({
 
     checkCollisions(fabricCanvas);
     updatePlacedMachines();
+    drawEdgeDistanceLines(fabricCanvas)
    toast.success(`${machine.machine_name} added to layout`);
   };
 
@@ -431,6 +538,7 @@ const checkCollisions = (canvas: FabricCanvas) => {
       checkCollisions(fabricCanvas);
       updatePlacedMachines();
       toast.success("Machine removed");
+      drawEdgeDistanceLines(fabricCanvas);
     }
   };
 
