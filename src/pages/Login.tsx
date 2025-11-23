@@ -4,23 +4,44 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import supabase from "../supabase/server"
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Simple static check (replace with your API call or Firebase/Auth0 etc.)
-    if (email === "admin@homag.in" && password === "homag123") {
-      localStorage.setItem("isAuthenticated", "true");
+    // ===================
+    // Supabase Login
+    // ===================
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(error.message || "Invalid credentials");
+      setLoading(false);
+      return;
+    }
+
+    if (data.session) {
       toast.success("Login successful!");
+
+      // Save login state — your app already uses this
+      localStorage.setItem("isAuthenticated", "true");
+
       navigate("/authenticated");
     } else {
-      toast.error("Invalid credentials. Please try again.");
+      toast.error("Login failed — no session returned.");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -33,6 +54,7 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          {/* Email */}
           <div>
             <label className="text-sm font-medium text-slate-700">Email</label>
             <Input
@@ -44,6 +66,7 @@ const Login = () => {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="text-sm font-medium text-slate-700">Password</label>
             <Input
@@ -55,8 +78,13 @@ const Login = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-[#001942] hover:bg-[#002b6b]">
-            Login
+          {/* Login Button */}
+          <Button
+            type="submit"
+            className="w-full bg-[#001942] hover:bg-[#002b6b]"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
 
