@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Rect, Text, FabricObject, Group } from "fabric";
+import {
+  Canvas as FabricCanvas,
+  Rect,
+  Text,
+  FabricObject,
+  Group,
+} from "fabric";
 import { Machine, PlacedMachine } from "@/types/machine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  ZoomIn, ZoomOut, Maximize2, RotateCw, Trash2, FileDown
+import {
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  RotateCw,
+  Trash2,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateReport } from "./ReportGenerator.tsx";
+
+  const isGroup = (obj: FabricObject): obj is Group => {
+  return obj.type === "group";
+  };
 
 
 interface FactoryCanvasProps {
@@ -17,25 +32,68 @@ interface FactoryCanvasProps {
   placedMachines: PlacedMachine[];
 }
 
-export const FactoryCanvas = ({ selectedMachine, onMachinesUpdate, placedMachines }: FactoryCanvasProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export const FactoryCanvas = ({
+  selectedMachine,
+  onMachinesUpdate,
+  placedMachines,
+}: FactoryCanvasProps) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const PIXELS_PER_METER = 40;
+  const COLOR = "#d4c7c7ff";
 
   const [useMeters, setUseMeters] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 30, height: 20 });
-  const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
+  const [selectedObject, setSelectedObject] = useState<FabricObject | null>(
+    null
+  );
 
-  const PIXELS_PER_METER = 40;
-  const COLOR = "#d4c7c7ff";
-  
+  // Cartesian coords stored in meters
+  const [machineX, setMachineX] = useState<number>(0);
+  const [machineY, setMachineY] = useState<number>(0);
 
-  const convertToMeters = (value: number) => (useMeters ? value : value / 3.28084);
-  const convertFromMeters = (value: number) => (useMeters ? value : value * 3.28084);
+  const convertToMeters = (value: number) =>
+    useMeters ? value : value / 3.28084;
+  const convertFromMeters = (value: number) =>
+    useMeters ? value : value * 3.28084;
 
-  const isGroup = (obj: FabricObject): obj is Group => {
-  return obj.type === "group";
+  // Type guard for Fabric Group
+  function isFabricGroup(obj: FabricObject | null | undefined): obj is Group {
+    return !!obj && obj.type === "group";
+  }
+
+  //
+  // Helpers: convert between Fabric canvas coords and user Cartesian (bottom-left origin)
+  //
+
+  // Fabric Group -> Cartesian bottom-left (returns in meters)
+  const fabricToCartesian = (obj: Group) => {
+    // getBoundingRect returns axis-aligned bounding box in canvas px
+    const rect = obj.getBoundingRect(); // no args for Fabric v6
+    const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
+
+    const xMeters = rect.left / PIXELS_PER_METER;
+    const yMeters = (canvasHeightPx - (rect.top + rect.height)) / PIXELS_PER_METER;
+
+    return { x: Number(xMeters.toFixed(4)), y: Number(yMeters.toFixed(4)) };
   };
-  
+
+  // Cartesian bottom-left (meters) -> Fabric left/top values for the group's position
+  // Note: this uses the group's current bounding box height (transformed) so placement is correct
+  const cartesianToFabric = (obj: Group, xMeters: number, yMeters: number) => {
+    const rect = obj.getBoundingRect();
+    const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
+
+    const left = xMeters * PIXELS_PER_METER;
+    // compute top such that bottom-left of bounding box is at (xMeters, yMeters)
+    const top = canvasHeightPx - (yMeters * PIXELS_PER_METER + rect.height);
+
+    return { left, top };
+  };
+
+  //
+  // Canvas lifecycle
+  //
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -49,97 +107,153 @@ export const FactoryCanvas = ({ selectedMachine, onMachinesUpdate, placedMachine
     drawGrid(canvas);
     setFabricCanvas(canvas);
 
-    canvas.on("selection:created", (e) => setSelectedObject(e.selected?.[0] || null));
-    canvas.on("selection:updated", (e) => setSelectedObject(e.selected?.[0] || null));
-    canvas.on("selection:cleared", () => setSelectedObject(null));
+    // selection handlers
+    canvas.on("selection:created", (e) => {
+      const obj = e.selected?.[0] ?? null;
+      setSelectedObject(obj);
+      if (isFabricGroup(obj)) {
+        const { x, y } = fabricToCartesian(obj);
+        setMachineX(x);
+        setMachineY(y);
+      }
+    });
 
-    // Collision check events
-    canvas.on("object:moving", () => checkCollisions(canvas));
+    canvas.on("selection:updated", (e) => {
+      const obj = e.selected?.[0] ?? null;
+      setSelectedObject(obj);
+      if (isFabricGroup(obj)) {
+        const { x, y } = fabricToCartesian(obj);
+        setMachineX(x);
+        setMachineY(y);
+      }
+    });
+
+    canvas.on("selection:cleared", () => {
+      setSelectedObject(null);
+    });
+
+    // while moving, update coordinates (live) and collision check
+    canvas.on("object:moving", (e) => {
+      const obj = e.target;
+      if (isFabricGroup(obj)) {
+        // update live coordinates for selected object
+        if (obj === selectedObject) {
+          const { x, y } = fabricToCartesian(obj);
+          setMachineX(x);
+          setMachineY(y);
+        }
+      }
+      checkCollisions(canvas);
+    });
+
     canvas.on("object:rotating", () => checkCollisions(canvas));
     canvas.on("object:scaling", () => checkCollisions(canvas));
 
     return () => {
       canvas.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dimensions]);
 
   useEffect(() => {
     if (selectedMachine && fabricCanvas) {
       addMachineToCanvas(selectedMachine);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMachine, fabricCanvas]);
 
+  //
+  // Draw grid
+  //
   const drawGrid = (canvas: FabricCanvas) => {
     const gridSize = PIXELS_PER_METER;
+    // remove any previous grid objects? (omitted here - assume fresh canvas)
     for (let i = 0; i <= dimensions.width; i++) {
-      canvas.add(new Rect({
-        left: i * gridSize,
-        top: 0,
-        width: 1,
-        height: dimensions.height * gridSize,
-        fill: "#ccc",
-        selectable: false,
-        evented: false,
-      }));
+      canvas.add(
+        new Rect({
+          left: i * gridSize,
+          top: 0,
+          width: 1,
+          height: dimensions.height * gridSize,
+          fill: "#eee",
+          selectable: false,
+          evented: false,
+        })
+      );
     }
     for (let i = 0; i <= dimensions.height; i++) {
-      canvas.add(new Rect({
-        left: 0,
-        top: i * gridSize,
-        width: dimensions.width * gridSize,
-        height: 1,
-        fill: "#ccc",
-        selectable: false,
-        evented: false,
-      }));
+      canvas.add(
+        new Rect({
+          left: 0,
+          top: i * gridSize,
+          width: dimensions.width * gridSize,
+          height: 1,
+          fill: "#eee",
+          selectable: false,
+          evented: false,
+        })
+      );
     }
   };
 
+  //
+  // Add a machine group to canvas. IMPORTANT: group origin set to left/top so left/top match bounding rect top-left.
+  //
   const addMachineToCanvas = (machine: Machine) => {
     if (!fabricCanvas) return;
 
-    const rectWidth = machine.width_mm * PIXELS_PER_METER / 1000;
-    const rectHeight = machine.length_mm * PIXELS_PER_METER / 1000;
+    const rectWidth = (machine.width_mm * PIXELS_PER_METER) / 1000;
+    const rectHeight = (machine.length_mm * PIXELS_PER_METER) / 1000;
 
+    // Use left/top origins for rect and group so placement math is simple
     const machineRect = new Rect({
+      left: 0,
+      top: 0,
       width: rectWidth,
       height: rectHeight,
       fill: "#3B82F6",
-      opacity: 0.7,
+      opacity: 0.85,
       stroke: "#1D4ED8",
       strokeWidth: 2,
       rx: 4,
-      ry: 4,
-      originX: "center",
-      originY: "center",
+      originX: "left",
+      originY: "top",
+      selectable: false,
+      evented: false,
     });
 
     const nameLabel = new Text(machine.machine_name, {
-      fontSize: 16,
-      fill: "#ffffff",
+      left: 6,
+      top: 6,
+      fontSize: 14,
+      fill: "#fff",
       fontWeight: "bold",
-      originX: "center",
-      originY: "center",
-      textAlign: "center",
+      originX: "left",
+      originY: "top",
+      selectable: false,
+      evented: false,
     });
 
     const dimensionLabel = new Text(
-      `${machine.width_mm / 1000}m × ${machine.length_mm / 1000}m`,
+      `${(machine.width_mm / 1000).toFixed(2)}m × ${(machine.length_mm / 1000).toFixed(2)}m`,
       {
-        fontSize: 14,
-        fill: "#ffffff",
-        originX: "center",
-        originY: "center",
-        textAlign: "center",
-        top: 20,
+        left: 6,
+        top: rectHeight - 18,
+        fontSize: 12,
+        fill: "#fff",
+        originX: "left",
+        originY: "top",
+        selectable: false,
+        evented: false,
       }
     );
 
+    // Important: group origin left/top so group.left/top match group's top-left
     const group = new Group([machineRect, nameLabel, dimensionLabel], {
-      left: 100,
-      top: 100,
-      originX: "center",
-      originY: "center",
+      left: 50,
+      top: 50,
+      originX: "left",
+      originY: "top",
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
@@ -149,14 +263,23 @@ export const FactoryCanvas = ({ selectedMachine, onMachinesUpdate, placedMachine
 
     fabricCanvas.add(group);
     fabricCanvas.setActiveObject(group);
-    fabricCanvas.renderAll();
+    fabricCanvas.requestRenderAll();
+
+    // after adding, update numeric coordinates for selection
+    if (isFabricGroup(group)) {
+      const { x, y } = fabricToCartesian(group);
+      setMachineX(x);
+      setMachineY(y);
+    }
 
     checkCollisions(fabricCanvas);
     updatePlacedMachines();
-
-    toast.success(`${machine.machine_name} added to layout`);
+   toast.success(`${machine.machine_name} added to layout`);
   };
 
+  //
+  // Collision detection (uses bounding boxes)
+  //
 const checkCollisions = (canvas: FabricCanvas) => {
   const objects = canvas.getObjects().filter(obj => (obj as any).machineData);
 
@@ -217,43 +340,84 @@ const checkCollisions = (canvas: FabricCanvas) => {
   canvas.renderAll();
 };
 
+  //
+  // When inputs change: place group so its bottom-left matches user coords.
+  //
+  const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
+    if (!selectedObject || !fabricCanvas || !isFabricGroup(selectedObject)) return;
 
+    // user may be in ft -> convert to meters
+    const metersValue = convertToMeters(inputValue);
 
+    const newX = axis === "x" ? metersValue : machineX;
+    const newY = axis === "y" ? metersValue : machineY;
 
+    const { left, top } = cartesianToFabric(selectedObject, newX, newY);
+
+    selectedObject.set({ left, top });
+    selectedObject.setCoords();
+    fabricCanvas.requestRenderAll();
+
+    setMachineX(newX);
+    setMachineY(newY);
+
+    checkCollisions(fabricCanvas);
+    updatePlacedMachines();
+  };
+
+  //
+  // Update placed machines list (reporting coordinates as bottom-left meters)
+  //
   const updatePlacedMachines = () => {
     if (!fabricCanvas) return;
 
     const machines: PlacedMachine[] = fabricCanvas
       .getObjects()
-      .filter(obj => (obj as any).machineData)
-      .map(obj => {
-        const rect = obj as Rect;
-        const machineData = (obj as any).machineData;
+      .filter((o) => (o as any).machineData)
+      .map((o) => {
+        const group = o as Group;
+        const machineData = (o as any).machineData;
+        let x = 0;
+        let y = 0;
+        if (isFabricGroup(group)) {
+          const coords = fabricToCartesian(group);
+          x = coords.x;
+          y = coords.y;
+        }
         return {
           ...machineData,
-          x: rect.left || 0,
-          y: rect.top || 0,
-          rotation: rect.angle || 0,
-        };
+          x,
+          y,
+          rotation: (o as any).angle || 0,
+        } as PlacedMachine;
       });
 
     onMachinesUpdate(machines);
   };
 
-  const handleZoomIn = () => fabricCanvas && fabricCanvas.setZoom(Math.min(fabricCanvas.getZoom() * 1.2, 3));
-  const handleZoomOut = () => fabricCanvas && fabricCanvas.setZoom(Math.max(fabricCanvas.getZoom() / 1.2, 0.5));
+  //
+  // Zoom / view / rotate / delete / report handlers
+  //
+  const handleZoomIn = () =>
+    fabricCanvas && fabricCanvas.setZoom(Math.min(fabricCanvas.getZoom() * 1.2, 3));
+  const handleZoomOut = () =>
+    fabricCanvas && fabricCanvas.setZoom(Math.max(fabricCanvas.getZoom() / 1.2, 0.5));
   const handleResetView = () => {
-    if (fabricCanvas) {
-      fabricCanvas.setZoom(1);
-      fabricCanvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-      fabricCanvas.renderAll();
-    }
+    if (!fabricCanvas) return;
+    fabricCanvas.setZoom(1);
+    fabricCanvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+    fabricCanvas.requestRenderAll();
   };
 
   const handleRotate = () => {
-    if (selectedObject && fabricCanvas) {
+    if (selectedObject && fabricCanvas && isFabricGroup(selectedObject)) {
       selectedObject.rotate((selectedObject.angle || 0) + 90);
-      fabricCanvas.renderAll();
+      selectedObject.setCoords();
+      fabricCanvas.requestRenderAll();
+      // update coords after rotation
+      const { x, y } = fabricToCartesian(selectedObject);
+      setMachineX(x);
+      setMachineY(y);
       checkCollisions(fabricCanvas);
       updatePlacedMachines();
     }
@@ -262,8 +426,8 @@ const checkCollisions = (canvas: FabricCanvas) => {
   const handleDelete = () => {
     if (selectedObject && fabricCanvas) {
       fabricCanvas.remove(selectedObject);
-      fabricCanvas.renderAll();
-      setSelectedObject(null);
+    setSelectedObject(null);
+      fabricCanvas.requestRenderAll();
       checkCollisions(fabricCanvas);
       updatePlacedMachines();
       toast.success("Machine removed");
@@ -280,10 +444,10 @@ const checkCollisions = (canvas: FabricCanvas) => {
     <div className="flex flex-col h-full bg-background overflow-x-scroll">
       {/* === TOP CONTROL BAR === */}
       <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
-
-        {/* DIMENSIONS SECTION */}
+       {/* DIMENSIONS SECTION */}
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-sm font-semibold text-slate-700">Factory Floor Dimension</h2>
+
           <div className="flex items-center gap-2">
             <Label htmlFor="width" className="text-xs font-medium text-slate-600">
               Width ({useMeters ? "m" : "ft"}):
@@ -301,6 +465,7 @@ const checkCollisions = (canvas: FabricCanvas) => {
               className="w-20 text-xs py-1"
             />
           </div>
+
           <div className="flex items-center gap-2">
             <Label htmlFor="height" className="text-xs font-medium text-slate-600">
               Height ({useMeters ? "m" : "ft"}):
@@ -318,10 +483,12 @@ const checkCollisions = (canvas: FabricCanvas) => {
               className="w-20 text-xs py-1"
             />
           </div>
+
           <p className="text-xs text-slate-500 text-center">
             ({Math.round(dimensions.width * dimensions.height)} m² /
             {Math.round(dimensions.width * dimensions.height * 10.7639)} ft²)
           </p>
+
           <Button
             onClick={() => setUseMeters((prev) => !prev)}
             size="sm"
@@ -330,6 +497,27 @@ const checkCollisions = (canvas: FabricCanvas) => {
           >
             {useMeters ? "Switch to Feet" : "Switch to Meters"}
           </Button>
+
+          {/* Cartesian inputs (visible when object selected) */}
+          {selectedObject && isFabricGroup(selectedObject) && (
+            <div className="flex items-center gap-2 ml-4">
+              <Label className="text-xs">X</Label>
+              <Input
+                type="number"
+                value={convertFromMeters(machineX)}
+                onChange={(e) => handleCartesianMove("x", Number(e.target.value))}
+                className="w-20 text-xs py-1"
+              />
+
+              <Label className="text-xs">Y</Label>
+              <Input
+                type="number"
+                value={convertFromMeters(machineY)}
+                onChange={(e) => handleCartesianMove("y", Number(e.target.value))}
+                className="w-20 text-xs py-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* CANVAS CONTROLS */}
@@ -353,7 +541,7 @@ const checkCollisions = (canvas: FabricCanvas) => {
       <div className="flex-1 overflow-auto p-4 bg-muted/30">
         <div className="flex items-center justify-center min-h-full">
           <div className="rounded-lg overflow-hidden bg-white border-4 border-black shadow-lg">
-            <canvas ref={canvasRef} className="block" />
+            <canvas ref={(el) => (canvasRef.current = el)} className="block" />
           </div>
         </div>
       </div>
