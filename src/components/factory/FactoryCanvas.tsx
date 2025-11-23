@@ -6,6 +6,7 @@ import {
   FabricObject,
   Group,
   Line,
+  Point,
 } from "fabric";
 import { Machine, PlacedMachine } from "@/types/machine";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,15 @@ import { generateReport } from "./ReportGenerator.tsx";
   const isGroup = (obj: FabricObject): obj is Group => {
   return obj.type === "group";
   };
+  declare module "fabric" {
+  interface FabricObject {
+    isGrid?: boolean;
+    isDistanceLine?: boolean;
+    isCollisionText?: boolean;
+    machineData?: any;
+  }
+}
+
 
 
 interface FactoryCanvasProps {
@@ -42,6 +52,7 @@ export const FactoryCanvas = ({
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const PIXELS_PER_METER = 40;
   const COLOR = "#d4c7c7ff";
+  
 
   const [useMeters, setUseMeters] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 30, height: 20 });
@@ -68,6 +79,8 @@ export const FactoryCanvas = ({
   //
 
 
+  const useMetersRef = useRef(useMeters);
+  
 
   const getBoundingEdges = (obj: Group) => {
   const rect = obj.getBoundingRect();
@@ -128,15 +141,12 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
         startX = eA.right < eB.left ? eA.right : eA.left;
         endY = startY;
         endX = eA.right < eB.left ? eB.left : eB.right;
-      } else { // diagonal
-        startX = eA.right < eB.left ? eA.right : eA.left;
-        startY = eA.bottom < eB.top ? eA.bottom : eA.top;
-        endX = eA.right < eB.left ? eB.left : eB.right;
-        endY = eA.bottom < eB.top ? eB.top : eB.bottom;
-      }
+      } 
 
       const distanceMeters = Math.sqrt(dx * dx + dy * dy) / PIXELS_PER_METER;
-      const displayDistance = useMeters ? distanceMeters : distanceMeters * 3.28084;
+const unitIsMeters = useMetersRef.current;
+const displayDistance = unitIsMeters ? distanceMeters : distanceMeters * 3.28084;
+
 
       const line = new Line([startX, startY, endX, endY], {
         stroke: "red",
@@ -150,7 +160,7 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
       const midX = (startX + endX) / 2;
       const midY = (startY + endY) / 2;
 
-      const text = new Text(displayDistance.toFixed(2) + (useMeters ? "m" : "ft"), {
+      const text = new Text(displayDistance.toFixed(2) + (unitIsMeters ? "m" : "ft"), {
         left: midX,
         top: midY-10,
         fontSize: 14,
@@ -183,16 +193,25 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
 
   // Cartesian bottom-left (meters) -> Fabric left/top values for the group's position
   // Note: this uses the group's current bounding box height (transformed) so placement is correct
-  const cartesianToFabric = (obj: Group, xMeters: number, yMeters: number) => {
-    const rect = obj.getBoundingRect();
-    const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
+ // (xMeters, yMeters) represent the CENTER of the machine
+const cartesianToFabric = (xMeters: number, yMeters: number) => {
+  const centerX = xMeters * PIXELS_PER_METER;
 
-    const left = xMeters * PIXELS_PER_METER;
-    // compute top such that bottom-left of bounding box is at (xMeters, yMeters)
-    const top = canvasHeightPx - (yMeters * PIXELS_PER_METER + rect.height);
+  // Convert bottom-left Cartesian → Fabric (top-left origin)
+  const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
+  const centerY = canvasHeightPx - yMeters * PIXELS_PER_METER;
 
-    return { left, top };
-  };
+  return { centerX, centerY };
+};
+
+
+
+
+useEffect(() => {
+  useMetersRef.current = useMeters;
+  if (fabricCanvas) drawEdgeDistanceLines(fabricCanvas);
+}, [useMeters, fabricCanvas]);
+
 
   //
   // Canvas lifecycle
@@ -236,19 +255,42 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
     });
 
     // while moving, update coordinates (live) and collision check
-    canvas.on("object:moving", (e) => {
-      const obj = e.target;
-      if (isFabricGroup(obj)) {
-        // update live coordinates for selected object
-        if (obj === selectedObject) {
-          const { x, y } = fabricToCartesian(obj);
-          setMachineX(x);
-          setMachineY(y);
-        }
-      }
-      checkCollisions(canvas);
-      drawEdgeDistanceLines(canvas)
-    });
+canvas.on("object:moving", (e) => {
+  const obj = e.target;
+  if (!obj) return;
+
+  // 1. get CENTER
+  const center = obj.getCenterPoint();
+
+  // 2. use scaled size (rotation-independent)
+  const halfW = obj.getScaledWidth() / 2;
+  const halfH = obj.getScaledHeight() / 2;
+
+  // 3. clamp center
+  const minX = halfW;
+  const minY = halfH;
+  const maxX = canvas.getWidth() - halfW;
+  const maxY = canvas.getHeight() - halfH;
+
+  center.x = Math.min(Math.max(center.x, minX), maxX);
+  center.y = Math.min(Math.max(center.y, minY), maxY);
+
+  // 4. move object based on center
+  obj.setPositionByOrigin(center, "center", "center");
+  obj.setCoords();
+
+  // 5. your existing logic
+  if (isFabricGroup(obj) && obj === selectedObject) {
+    const { x, y } = fabricToCartesian(obj);
+    setMachineX(x);
+    setMachineY(y);
+  }
+
+  checkCollisions(canvas);
+  drawEdgeDistanceLines(canvas);
+});
+
+
 
     canvas.on("object:rotating", () => {checkCollisions(canvas);
       drawEdgeDistanceLines(canvas)
@@ -259,7 +301,26 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
       canvas.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dimensions]);
+  }, []);
+
+  useEffect(() => {
+  if (!fabricCanvas) return;
+
+  // Resize canvas without recreating it
+  fabricCanvas.setWidth(dimensions.width * PIXELS_PER_METER);
+  fabricCanvas.setHeight(dimensions.height * PIXELS_PER_METER);
+
+  // Remove old grid lines
+  fabricCanvas.getObjects()
+    .filter(o => o.isGrid)
+    .forEach(o => fabricCanvas.remove(o));
+
+  // Draw a new grid
+  drawGrid(fabricCanvas);
+
+  fabricCanvas.requestRenderAll();
+}, [dimensions, fabricCanvas]);
+
 
   useEffect(() => {
     if (selectedMachine && fabricCanvas) {
@@ -271,36 +332,39 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
   //
   // Draw grid
   //
-  const drawGrid = (canvas: FabricCanvas) => {
-    const gridSize = PIXELS_PER_METER;
-    // remove any previous grid objects? (omitted here - assume fresh canvas)
-    for (let i = 0; i <= dimensions.width; i++) {
-      canvas.add(
-        new Rect({
-          left: i * gridSize,
-          top: 0,
-          width: 1,
-          height: dimensions.height * gridSize,
-          fill: "#eee",
-          selectable: false,
-          evented: false,
-        })
-      );
-    }
-    for (let i = 0; i <= dimensions.height; i++) {
-      canvas.add(
-        new Rect({
-          left: 0,
-          top: i * gridSize,
-          width: dimensions.width * gridSize,
-          height: 1,
-          fill: "#eee",
-          selectable: false,
-          evented: false,
-        })
-      );
-    }
-  };
+  
+const drawGrid = (canvas: FabricCanvas) => {
+  const gridSize = PIXELS_PER_METER;
+
+  for (let i = 0; i <= dimensions.width; i++) {
+    const line = new Rect({
+      left: i * gridSize,
+      top: 0,
+      width: 1,
+      height: dimensions.height * gridSize,
+      fill: "#eee",
+      selectable: false,
+      evented: false,
+    });
+    line.isGrid = true;
+    canvas.add(line);
+  }
+
+  for (let i = 0; i <= dimensions.height; i++) {
+    const line = new Rect({
+      left: 0,
+      top: i * gridSize,
+      width: dimensions.width * gridSize,
+      height: 1,
+      fill: "#eee",
+      selectable: false,
+      evented: false,
+    });
+    line.isGrid = true;
+    canvas.add(line);
+  }
+};
+
 
   //
   // Add a machine group to canvas. IMPORTANT: group origin set to left/top so left/top match bounding rect top-left.
@@ -450,27 +514,65 @@ const checkCollisions = (canvas: FabricCanvas) => {
   //
   // When inputs change: place group so its bottom-left matches user coords.
   //
-  const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
-    if (!selectedObject || !fabricCanvas || !isFabricGroup(selectedObject)) return;
+const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
+  if (!selectedObject || !fabricCanvas || !isFabricGroup(selectedObject)) return;
 
-    // user may be in ft -> convert to meters
-    const metersValue = convertToMeters(inputValue);
+  const metersValue = convertToMeters(inputValue);
 
-    const newX = axis === "x" ? metersValue : machineX;
-    const newY = axis === "y" ? metersValue : machineY;
+  // -------------------------
+  // 1. Compute target position
+  // -------------------------
+  const targetX = axis === "x" ? metersValue : machineX;
+  const targetY = axis === "y" ? metersValue : machineY;
 
-    const { left, top } = cartesianToFabric(selectedObject, newX, newY);
+  // -------------------------
+  // 2. Clamp to factory bounds
+  // -------------------------
+  const halfW = selectedObject.getScaledWidth() / PIXELS_PER_METER / 2;
+  const halfH = selectedObject.getScaledHeight() / PIXELS_PER_METER / 2;
 
-    selectedObject.set({ left, top });
+  const maxX = dimensions.width - halfW;
+  const maxY = dimensions.height - halfH;
+
+  const clampedX = Math.min(Math.max(targetX, halfW), maxX);
+  const clampedY = Math.min(Math.max(targetY, halfH), maxY);
+
+  const isClamped = clampedX !== targetX || clampedY !== targetY;
+
+  if (isClamped) {
+    toast.error("Out of bounds — machine center must stay inside factory.");
+  }
+
+  // -------------------------
+  // 3. Convert Cart → Fabric
+  // -------------------------
+  const { centerX, centerY } = cartesianToFabric(clampedX, clampedY);
+
+  // Only move if changed
+  const prev = selectedObject.getCenterPoint();
+  if (prev.x !== centerX || prev.y !== centerY) {
+    selectedObject.setPositionByOrigin(
+      new Point(centerX, centerY),
+      "center",
+      "center"
+    );
     selectedObject.setCoords();
     fabricCanvas.requestRenderAll();
+  }
 
-    setMachineX(newX);
-    setMachineY(newY);
+  // -------------------------
+  // 4. Update state + run checks
+  // -------------------------
+  setMachineX(clampedX);
+  setMachineY(clampedY);
 
-    checkCollisions(fabricCanvas);
-    updatePlacedMachines();
-  };
+  checkCollisions(fabricCanvas);
+  updatePlacedMachines();
+
+  return { x: clampedX, y: clampedY, clamped: isClamped };
+};
+
+
 
   //
   // Update placed machines list (reporting coordinates as bottom-left meters)
