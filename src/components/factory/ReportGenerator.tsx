@@ -185,7 +185,7 @@ const summaryData = [
   ],
   [
     "Total CapEx",
-    `Rs.${(totalMachineCapex / 100000).toFixed(2)} Lakhs`,
+    `Rs.${totalMachineCapex.toLocaleString()} Lakhs`,
     "Est. OpEx (Annual)",
     `Rs.${totalMachineOpex.toLocaleString()}`
   ],
@@ -245,6 +245,7 @@ const summaryData = [
 
     // === EQUIPMENT LIST ===
 // === EQUIPMENT SCHEDULE ===
+// === EQUIPMENT SCHEDULE ===
 if (y > 250) {
   pdf.addPage();
   y = 20;
@@ -257,101 +258,100 @@ pdf.text("EQUIPMENT SCHEDULE", 10, y);
 pdf.line(10, y + 2, 200, y + 2);
 y += 10;
 
-// Build full table including machine, accessories, optionals, software
+// Table rows
 const equipmentRows: any[] = [];
-let serial = 0; // sequential numbering
-let grandTotal = 0;
-const accessories = globalAccessories;
-const softwares = globalSoftwares;
+let serial = 1;
 
-placedMachines.forEach((m, i) => {
+// Helper function for total calculation per row
+const calcTotal = (price: number, qty: number) => price * qty;
+
+placedMachines.forEach((m) => {
   const machinePrice = m.price_capex ?? 0;
-  const optionalPrice = m.optionalsCost ?? 0;
-  const optionals = m.selectedOptionals ?? [];
+  const quantity = 1;
 
-  // Fetch global accessories & softwares for every machine
-  // (You may modify this mapping logic as needed)
-
-  const accessoriesTotal = accessories.reduce((s, a) => s + (a.price ?? 0), 0);
-  const softwareTotal = softwares.reduce((s, a) => s + (a.price ?? 0), 0);
-
-  const machineTotal = machinePrice + optionalPrice + accessoriesTotal + softwareTotal;
-  grandTotal += machineTotal;
-
-  // Machine Main Row
+  // Main machine row
   equipmentRows.push([
     serial++,
     m.machine_name || "Unknown Machine",
     m.type || "-",
     `${m.length_mm || 0} x ${m.width_mm || 0}`,
-    "1",
-    `Rs. ${machinePrice.toLocaleString()}`,
-    ""
+    quantity,
+    `Rs. ${machinePrice.toLocaleString()}`,             // Unit Price
+    `Rs. ${calcTotal(machinePrice, quantity).toLocaleString()}` // Total Price
   ]);
 
-    // Optional Items
- optionals.forEach(opt => {
+  // Optional items
+  (m.selectedOptionals ?? []).forEach((opt) => {
+    const optQty = 1;
+    const optPrice = opt.price ?? 0;
+
     equipmentRows.push([
       "",
       "Optional",
-      opt.optional_name,     // ← SAME AS YOUR UI
+      opt.optional_name,
       "",
-      "1",
-      `Rs. ${opt.price.toLocaleString()}`
+      optQty,
+      `Rs. ${optPrice.toLocaleString()}`,
+      `Rs. ${calcTotal(optPrice, optQty).toLocaleString()}`
     ]);
   });
 });
 
- // Accessories Rows
-  accessories.forEach(acc => {
-    equipmentRows.push([
-      serial++,
-      "Accessory",
-      acc.accessory_name,
-      "-",
-      acc.qty ?? 1,
-      `Rs. ${acc.price.toLocaleString()}`,
-      ""
-    ]);
-  });
+// Accessories
+globalAccessories.forEach((acc) => {
+  const accQty = acc.qty ?? 1;
+  const accPrice = acc.price ?? 0;
+  equipmentRows.push([
+    serial++,
+    "Accessory",
+    acc.accessory_name,
+    "-",
+    accQty,
+    `Rs. ${accPrice.toLocaleString()}`,
+    `Rs. ${calcTotal(accPrice, accQty).toLocaleString()}`
+  ]);
+});
 
-  // Software Rows
-  softwares.forEach(sw => {
-    equipmentRows.push([
-      serial++,
-      "Software",
-      sw.software_name,
-      "",
-      sw.qty ?? 1,
-      `Rs. ${sw.price.toLocaleString()}`,
-      ""
-    ]);
-  });
+// Software
+globalSoftwares.forEach((sw) => {
+  const swQty = sw.qty ?? 1;
+  const swPrice = sw.price ?? 0;
+  equipmentRows.push([
+    serial++,
+    "Software",
+    sw.software_name,
+    "",
+    swQty,
+    `Rs. ${swPrice.toLocaleString()}`,
+    `Rs. ${calcTotal(swPrice, swQty).toLocaleString()}`
+  ]);
+});
 
+// Divider row
+equipmentRows.push(["", "", "", "", "", "", ""]);
 
-
-  // Divider Row
-equipmentRows.push(["", "", "", "", "", ""]);
-// Append GRAND TOTAL Row
+// GRAND TOTAL row (from previously calculated grandTotalCost)
 equipmentRows.push([
   "",
   "",
   "",
   "",
   "",
-  `GRAND TOTAL: Rs. ${grandTotal.toLocaleString()}`
+  "GRAND TOTAL",
+  `Rs. ${grandTotalCost.toLocaleString()}`
 ]);
 
-// Render Table
+// Render table
 autoTable(pdf, {
   startY: y,
-head: [["S.No", "Item", "Name", "Dims", "Qty", "Price"]],
+  head: [["S.No", "Item", "Name", "Dims", "Qty", "Unit Price", "Total Price"]],
   body: equipmentRows,
   theme: "striped",
   headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: "bold" },
   styles: { fontSize: 9, cellPadding: 3 },
   alternateRowStyles: { fillColor: [245, 247, 250] },
 });
+
 
 
 
