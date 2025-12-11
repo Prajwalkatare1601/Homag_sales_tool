@@ -30,12 +30,27 @@ const Index = () => {
     setTimeout(() => setSelectedMachine(null), 100);
   };
 
-  const handleGenerateReport = () => {
-    const canvas = document.querySelector("canvas");
-    if (canvas) {
-      generateReport(canvas, placedMachines, layoutDimensions, globalAccessories, globalSoftwares);
-    }
-  };
+// Inside Index.tsx
+const handleGenerateReport = (userInfo: {
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+}) => {
+  const canvas = document.querySelector("canvas");
+  if (canvas) {
+    generateReport(
+      canvas,
+      placedMachines,
+      layoutDimensions,
+      globalAccessories,
+      globalSoftwares,
+      userInfo// wrap in array
+    );
+  }
+};
+
+
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
@@ -185,13 +200,14 @@ const Index = () => {
               <h2 className="text-lg font-semibold text-slate-700 mb-3">
                 Productivity Insights
               </h2>
-                <ProductivityMetrics
-                  placedMachines={placedMachines}
-                  globalAccessories={globalAccessories}
-                  globalSoftwares={globalSoftwares}  // <-- add this
-                  layoutDimensions={layoutDimensions}
-                  onGenerateReport={handleGenerateReport}
-                />
+<ProductivityMetrics
+  placedMachines={placedMachines}
+  globalAccessories={globalAccessories}
+  globalSoftwares={globalSoftwares}
+  layoutDimensions={layoutDimensions}
+  onGenerateReport={handleGenerateReport} // pass callback here
+/>
+
             </div>
           )}
 

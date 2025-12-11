@@ -15,6 +15,19 @@ import {
   Coins,
   Building2,
 } from "lucide-react";
+import { useState } from "react";
+import { generateReport } from "@/components/factory/ReportGenerator";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
+
+
+interface UserInfo {
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+}
 
 interface ProductivityMetricsProps {
   placedMachines: PlacedMachine[];
@@ -22,7 +35,7 @@ interface ProductivityMetricsProps {
   globalSoftwares?: any[];      // ✅ add optional
 
   layoutDimensions: { width: number; height: number };
-  onGenerateReport: () => void;
+  onGenerateReport: (userInfo: UserInfo) => void; // ✅ Accepts one argument
 }
 
 
@@ -33,6 +46,37 @@ export const ProductivityMetrics = ({
   layoutDimensions,
   onGenerateReport,
 }: ProductivityMetricsProps) => {
+
+const [showUserForm, setShowUserForm] = useState(false);
+const [userInfo, setUserInfo] = useState({
+  name: "",
+  company: "",
+  phone: "",
+  email: "",
+});
+
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setUserInfo(prev => ({ ...prev, [e.target.name]: e.target.value }));
+};
+
+const handleSubmit = () => {
+  if (!userInfo.name || !userInfo.company || !userInfo.email) {
+    alert("Please fill in Name and Email");
+    return;
+  }
+
+  // === Email Validation ===  
+  if (!userInfo.email.includes("@") || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInfo.email)) {
+    alert("Please enter a valid email address");
+    return;
+  }
+
+  // Pass data to parent
+  onGenerateReport(userInfo);
+
+  setShowUserForm(false);
+};
+
 
 
   // 🔍 DEBUG
@@ -121,11 +165,14 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
   
 
   // === Derived Financials ===
-  const avgROI =
-    placedMachines.length > 0
-      ? placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-      (placedMachines.length + 300)
-      : 0;
+const avgROI =
+  placedMachines.length > 0
+    ? Math.round(
+        (placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
+          (placedMachines.length + 300)) *
+          10
+      ) / 10
+    : 0;
 
   // === Resource Estimates ===
   const glueConsumption = numMachines * 40;
@@ -392,13 +439,71 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
 
       {/* === Button Section === */}
       <div className="flex-shrink-0 flex flex-col">
-        <Button
-          onClick={onGenerateReport}
-          className="w-full text-sm font-medium flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <FileText />
-          Generate PDF Report
-        </Button>
+<Button
+  onClick={() => setShowUserForm(true)}
+  className="w-full text-sm font-medium flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
+>
+  <FileText />
+  Generate PDF Report
+</Button>
+{showUserForm && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-lg shadow-lg w-96 p-6 relative">
+      <h2 className="text-lg font-semibold mb-4">Enter Your Details</h2>
+
+      <div className="flex flex-col gap-3">
+        <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={userInfo.name}
+          onChange={handleChange}
+          className="border rounded-md px-3 py-2"
+        />
+        <input
+          type="text"
+          name="company"
+          placeholder="Company Name"
+          value={userInfo.company}
+          onChange={handleChange}
+          className="border rounded-md px-3 py-2"
+        />
+<PhoneInput
+  country={"in"}
+  enableSearch={true}
+  value={userInfo.phone}
+  onChange={(value) => {
+    // Remove spaces, hyphens, parentheses, etc
+    const cleaned = value.replace(/[^\d+]/g, "");
+    setUserInfo({ ...userInfo, phone: cleaned });
+  }}
+  inputClass="!w-full !py-2 !px-3 !text-sm !rounded-md !border !border-slate-300"
+  buttonClass="!border !border-slate-300 !rounded-l-md"
+  containerClass="!w-full"
+  dropdownClass="!z-[9999]"
+/>
+
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Business Email"
+          value={userInfo.email}
+          onChange={handleChange}
+          className="border rounded-md px-3 py-2"
+        />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-3 mt-4">
+        <Button variant="ghost" onClick={() => setShowUserForm(false)}>Cancel</Button>
+        <Button onClick={handleSubmit}>Generate PDF</Button>
+      </div>
+    </div>
+  </div>
+)}
+
+
       </div>
     </div>
   );

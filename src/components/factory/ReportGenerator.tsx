@@ -3,6 +3,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PlacedMachine } from "@/types/machine";
 import { toast } from "sonner";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+
+
+interface UserInfo {
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+}
 
 export const generateReport = async (
   canvasElement: HTMLCanvasElement,
@@ -10,6 +19,7 @@ export const generateReport = async (
   layoutDimensions: { width: number; height: number },
   globalAccessories: any[],
   globalSoftwares: any[],
+  userInfo: UserInfo, // ✅ Use as object
 ) => {
   try {
     toast.loading("Generating professional report...");
@@ -19,6 +29,30 @@ export const generateReport = async (
       backgroundColor: "#ffffff",
       scale: 2,
     });
+
+const formatPhoneForPDF = (phone: string) => {
+  if (!phone) return "";
+
+  let fixedPhone = phone;
+
+  // If no + prefix, auto-add
+  if (!fixedPhone.startsWith("+")) {
+    // If 10 digits → assume India
+    if (/^\d{10}$/.test(fixedPhone)) {
+      fixedPhone = "+91" + fixedPhone;
+    } else {
+      // fallback: just add +
+      fixedPhone = "+" + fixedPhone;
+    }
+  }
+
+  const parsed = parsePhoneNumberFromString(fixedPhone);
+  if (!parsed) return phone;
+
+  return `${parsed.country} (+${parsed.countryCallingCode}) ${parsed.nationalNumber}`;
+};
+
+
 
     const pdf = new jsPDF({
       orientation: "portrait",
@@ -47,7 +81,37 @@ export const generateReport = async (
     pdf.setFont("helvetica", "normal");
     pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 200, 16, { align: "right" });
 
-    let y = 35;
+let y = 35;
+
+// === USER DETAILS ===
+pdf.setTextColor(...primaryColor);
+pdf.setFontSize(12);
+pdf.setFont("helvetica", "bold");
+pdf.text("USER DETAILS", 10, y);
+pdf.setLineWidth(0.5);
+pdf.setDrawColor(...accentColor);
+pdf.line(10, y + 2, 200, y + 2);
+y += 8;
+
+pdf.setFont("helvetica", "normal");
+pdf.setFontSize(10);
+pdf.setTextColor(...textGray);
+
+pdf.text(`Name: ${userInfo.name}`, 10, y);
+y += 5;
+pdf.text(`Company: ${userInfo.company}`, 10, y);
+y += 5;
+pdf.text(`Email: ${userInfo.email}`, 10, y);
+y += 5;
+if (userInfo.phone) {
+  const formattedPhone = formatPhoneForPDF(userInfo.phone);
+  pdf.text(`Phone: ${formattedPhone}`, 10, y);
+  y += 5;
+}
+
+
+// Add some spacing before the next section
+y += 5;
 
     // === PROJECT SUMMARY ===
     pdf.setTextColor(...primaryColor);
@@ -88,16 +152,21 @@ const totalMachineArea = placedMachines.reduce((s, m) => {
 }, 0);
 
 // === ROI (Years) ===
-const roiPeriodYears = 
+const roiPeriodYears =
   placedMachines.length > 0
-    ? placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-      (placedMachines.length + 350) // as per your existing formula
+    ? Math.round(
+        (placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
+          (placedMachines.length + 300)) *
+          10
+      ) / 10
     : 0;
+
 
 
 // === GRAND TOTAL ===
 const grandTotalCost =
-  totalMachineCapex + totalOptionals + totalAccessories + totalSoftwares;
+  totalMachineCapex + totalMachineOpex + totalOptionals + totalAccessories + totalSoftwares;
+
 
 
 // === SUMMARY TABLE ===
