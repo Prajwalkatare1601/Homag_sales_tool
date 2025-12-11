@@ -124,7 +124,7 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
   const avgROI =
     placedMachines.length > 0
       ? placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-      placedMachines.length
+      (placedMachines.length + 300)
       : 0;
 
   // === Resource Estimates ===
@@ -328,7 +328,7 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
 
 {/* === ACCESSORIES (GLOBAL) === */}
 <div>
-  <h3 className="text-sm font-semibold">Accessories (Global)</h3>
+  <h3 className="text-sm font-semibold">Accessories</h3>
   {globalAccessories.length === 0 ? (
     <p className="text-xs text-slate-500">No accessories selected</p>
   ) : (
