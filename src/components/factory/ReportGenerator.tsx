@@ -185,7 +185,7 @@ const summaryData = [
   ],
   [
     "Total CapEx",
-    `Rs.${totalMachineCapex.toLocaleString()} Lakhs`,
+    `Rs.${totalMachineCapex.toLocaleString()}`,
     "Est. OpEx (Annual)",
     `Rs.${totalMachineOpex.toLocaleString()}`
   ],
