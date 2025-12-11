@@ -6,8 +6,10 @@ import { ProductivityMetrics } from "@/components/factory/ProductivityMetrics";
 import { generateReport } from "@/components/factory/ReportGenerator";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, LogOut } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
+
 
 
 const Index = () => {
@@ -18,8 +20,10 @@ const Index = () => {
   const [metricsCollapsed, setMetricsCollapsed] = useState(false);
   const [globalAccessories, setGlobalAccessories] = useState<Accessory[]>([]);
   const [globalSoftwares, setGlobalSoftwares] = useState<Software[]>([]);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const navigate = useNavigate(); // <-- must be inside the component
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+
 
   const handleMachineSelect = (machine: Machine) => {
     setSelectedMachine(machine);
@@ -56,16 +60,34 @@ const Index = () => {
   </div>
 
   {/* Right Section — Logged-in User */}
-  <div className="flex items-center gap-3 mr-4">
-    {/* User Avatar (placeholder circle) */}
-    <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold text-slate-700 shadow-inner">
-      ad
-    </div>
-    <div className="flex flex-col text-right leading-tight">
-      <span className="text-sm font-medium text-white">admin</span>
-      <span className="text-[10px] text-slate-300">ID: HMG-1423</span>
-    </div>
+<div className="relative flex items-center gap-3 mr-4">
+  {/* User Avatar (placeholder circle) */}
+  <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold text-slate-700 shadow-inner">
+    ad
   </div>
+  <div className="flex flex-col text-right leading-tight cursor-pointer" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+    <span className="text-sm font-medium text-white flex items-center justify-end gap-1">
+      admin <ChevronDown className={`h-3 w-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+    </span>
+    <span className="text-[10px] text-slate-300">ID: HMG-1423</span>
+  </div>
+
+  {/* Dropdown Menu */}
+  {userMenuOpen && (
+    <div className="absolute right-0 mt-10 w-32 bg-white rounded-lg shadow-lg border border-slate-200 z-20">
+      <button
+        className="flex items-center gap-2 px-4 py-2 w-full text-left text-slate-700 hover:bg-slate-100"
+        onClick={() => {
+          console.log("Logging out...");
+          // Clear session and redirect
+          localStorage.removeItem("isAuthenticated");
+          navigate("/", { replace: true });        }}
+      >
+        <LogOut className="h-4 w-4" /> Logout
+      </button>
+    </div>
+  )}
+</div>
 </header>
 
 
