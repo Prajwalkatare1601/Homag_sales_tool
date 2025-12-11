@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Machine, PlacedMachine,Accessory } from "@/types/machine";
+import { Machine, PlacedMachine,Accessory,Software } from "@/types/machine";
 import { MachineCatalog } from "@/components/factory/MachineCatalog";
 import { FactoryCanvas } from "@/components/factory/FactoryCanvas";
 import { ProductivityMetrics } from "@/components/factory/ProductivityMetrics";
@@ -17,6 +17,7 @@ const Index = () => {
   const [catalogCollapsed, setCatalogCollapsed] = useState(false);
   const [metricsCollapsed, setMetricsCollapsed] = useState(false);
   const [globalAccessories, setGlobalAccessories] = useState<Accessory[]>([]);
+  const [globalSoftwares, setGlobalSoftwares] = useState<Software[]>([]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -100,7 +101,9 @@ const Index = () => {
 <MachineCatalog
   onMachineSelect={handleMachineSelect}
   onGlobalAccessoriesChange={setGlobalAccessories}
+  onGlobalSoftwaresChange={setGlobalSoftwares}  // <-- new
 />
+
             </div>
           )}
 
@@ -160,13 +163,13 @@ const Index = () => {
               <h2 className="text-lg font-semibold text-slate-700 mb-3">
                 Productivity Insights
               </h2>
-<ProductivityMetrics
-  placedMachines={placedMachines}
-  globalAccessories={globalAccessories} // NEW
-  layoutDimensions={layoutDimensions}
-  onGenerateReport={handleGenerateReport}
-/>
-
+                <ProductivityMetrics
+                  placedMachines={placedMachines}
+                  globalAccessories={globalAccessories}
+                  globalSoftwares={globalSoftwares}  // <-- add this
+                  layoutDimensions={layoutDimensions}
+                  onGenerateReport={handleGenerateReport}
+                />
             </div>
           )}
 

@@ -57,12 +57,15 @@ import { Check } from "lucide-react";
 interface MachineCatalogProps {
   onMachineSelect: (machine: Machine) => void;
   onGlobalAccessoriesChange?: (accessories: Accessory[]) => void;
-
+  onGlobalSoftwaresChange?: (softwares: Software[]) => void;
 }
+
+
 
 export const MachineCatalog = ({
   onMachineSelect,
-  onGlobalAccessoriesChange
+  onGlobalAccessoriesChange,
+  onGlobalSoftwaresChange, // ✅ add here
 }: MachineCatalogProps) =>{
   const [segment, setSegment] = useState("Kitchen");
   const [solution, setSolution] = useState("Panel Dividing");
@@ -91,6 +94,7 @@ const [loadingSoftwares, setLoadingSoftwares] = useState<boolean>(false);
 
 
 const [openAccessoriesDrawer, setOpenAccessoriesDrawer] = useState(false);
+const [openSoftwareDrawer, setOpenSoftwareDrawer] = useState(false);
 
 
 useEffect(() => {
@@ -393,124 +397,85 @@ return (
 </Drawer>
 
 
-
+<p>Software Selection</p>
 {/* SOFTWARES LIST - MULTISELECT WITH FETCHED DATA */}
-<div className="py-4">
-  <label className="text-xs font-bold text-slate-600">Softwares</label>
+<Drawer open={openSoftwareDrawer} onOpenChange={setOpenSoftwareDrawer}>
+  <DrawerTrigger asChild>
+    <Button
+      variant="outline"
+      className="w-full h-8 text-xs"
+      onClick={() => setOpenSoftwareDrawer(true)}
+    >
+      {selectedSoftwares.length > 0
+        ? `${selectedSoftwares.length} selected`
+        : "Select Softwares"}
+    </Button>
+  </DrawerTrigger>
 
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        variant="outline"
-        className="w-full h-8 px-2 text-xs justify-between"
-      >
-        {selectedSoftwares.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {selectedSoftwares.map((sw) => (
-              <Badge
-                key={sw.id}
-                className="text-[10px] flex items-center gap-1"
-              >
-                {sw.software_name}
+  <DrawerContent className="p-4">
+    <DrawerHeader>
+      <DrawerTitle>Select Softwares</DrawerTitle>
+    </DrawerHeader>
 
-                {/* REMOVE BUTTON */}
-                <button
-                  className="text-red-500 text-[10px] ml-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedSoftwares((prev: any[]) =>
-                      prev.filter((p) => p.id !== sw.id)
-                    );
-                  }}
-                >
-                  ✕
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          "Select Softwares"
-        )}
-      </Button>
-    </PopoverTrigger>
-
-    <PopoverContent className="w-[260px] p-0">
+    <div className="max-h-[60vh] overflow-y-auto space-y-2">
       {loadingSoftwares ? (
-        <div className="p-2 text-xs text-slate-500">Loading...</div>
+        <p className="text-xs text-slate-500">Loading softwares…</p>
+      ) : softwares.length === 0 ? (
+        <p className="text-xs text-slate-500">No softwares found.</p>
       ) : (
-        <Command>
-          {/* SEARCH */}
-          <div className="p-2">
-            <CommandInput placeholder="Search softwares..." />
-          </div>
+        softwares.map((sw) => {
+          const selected = selectedSoftwares.some((x) => x.id === sw.id);
 
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+          return (
+            <div
+              key={sw.id}
+              className="flex items-center justify-between border p-2 rounded-lg"
+            >
+              <div className="text-xs">
+                <p>{sw.software_name}</p>
+                {sw.price && (
+                  <p className="text-[10px] text-blue-600">₹{sw.price}</p>
+                )}
+              </div>
 
-            <CommandGroup>
-              {softwares.map((item) => {
-                const selected = selectedSoftwares.some((x) => x.id === item.id);
-
-                return (
-                  <CommandItem
-                    key={item.id}
-                    value={item.software_name}
-                    className="flex items-center justify-between"
-                    onSelect={() => {
-                      setSelectedSoftwares((prev: any[]) =>
-                        selected
-                          ? prev.filter((p) => p.id !== item.id)
-                          : [...prev, item]
-                      );
-                    }}
-                  >
-                    <div>
-                      <span className="text-xs">{item.software_name}</span>
-                      {item.price && (
-                        <p className="text-[10px] text-blue-600">
-                          ₹{item.price}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* ADD / REMOVE BUTTON */}
-                    <Button
-                      variant={selected ? "destructive" : "secondary"}
-                      className="h-5 text-[10px] px-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedSoftwares((prev: any[]) =>
-                          selected
-                            ? prev.filter((p) => p.id !== item.id)
-                            : [...prev, item]
-                        );
-                      }}
-                    >
-                      {selected ? "Remove" : "Add"}
-                    </Button>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-
-          {/* CLEAR ALL */}
-          {selectedSoftwares.length > 0 && (
-            <div className="p-2 border-t bg-slate-50">
-              <Button
-                variant="destructive"
-                className="w-full h-7 text-xs"
-                onClick={() => setSelectedSoftwares([])}
-              >
-                Clear All
-              </Button>
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() =>
+                  setSelectedSoftwares((prev) =>
+                    selected
+                      ? prev.filter((p) => p.id !== sw.id)
+                      : [...prev, sw]
+                  )
+                }
+              />
             </div>
-          )}
-        </Command>
+          );
+        })
       )}
-    </PopoverContent>
-  </Popover>
-</div>
+    </div>
+
+    <DrawerFooter className="flex justify-between">
+      <Button
+        variant="destructive"
+        onClick={() => setSelectedSoftwares([])}
+      >
+        Clear All
+      </Button>
+
+      <Button
+        onClick={() => {
+          if (onGlobalSoftwaresChange) {
+            onGlobalSoftwaresChange(selectedSoftwares); // update global
+          }
+          setOpenSoftwareDrawer(false); // close drawer
+        }}
+      >
+        Apply
+      </Button>
+    </DrawerFooter>
+  </DrawerContent>
+</Drawer>
+
 
 
 

@@ -19,6 +19,8 @@ import {
 interface ProductivityMetricsProps {
   placedMachines: PlacedMachine[];
   globalAccessories?: any[];              // ADD THIS
+  globalSoftwares?: any[];      // ✅ add optional
+
   layoutDimensions: { width: number; height: number };
   onGenerateReport: () => void;
 }
@@ -27,6 +29,7 @@ interface ProductivityMetricsProps {
 export const ProductivityMetrics = ({
   placedMachines,
   globalAccessories = [],
+  globalSoftwares = [],
   layoutDimensions,
   onGenerateReport,
 }: ProductivityMetricsProps) => {
@@ -36,7 +39,7 @@ export const ProductivityMetrics = ({
   console.log("PLACED MACHINES FULL DATA:", placedMachines);
   console.log("RAW capex values:", placedMachines.map(m => m.price_capex));
 
-if (placedMachines.length === 0 && globalAccessories.length === 0) {
+if (placedMachines.length === 0 && globalAccessories.length === 0 && globalSoftwares.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
         <Factory className="h-12 w-12 text-slate-400 mb-3" />
@@ -339,23 +342,41 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
 
 
       {/* === SOFTWARES === */}
-      <div>
-        <p className="font-medium text-slate-700 mb-1">Softwares</p>
-        <ul className="space-y-1">
-          {placedMachines.some(m => m.selectedSoftwares?.length) ? (
-            placedMachines.flatMap(m => m.selectedSoftwares || []).map((soft, idx) => (
-              <li
-                key={idx}
-                className="bg-purple-50 text-purple-700 rounded-md px-2 py-1"
-              >
-                {soft.software_name} – ₹{soft.price}
-              </li>
-            ))
-          ) : (
-            <li className="text-slate-400 italic">No software selected</li>
-          )}
-        </ul>
-      </div>
+<div>
+  {globalSoftwares.length > 0 && (
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold">Selected Softwares</h3>
+      <ul className="text-xs list-disc ml-4">
+        {globalSoftwares.map((sw) => (
+          <li key={sw.id}>
+            {sw.software_name} {sw.price ? `- ₹${sw.price}` : ""}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {globalAccessories.length > 0 && (
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold">Selected Accessories</h3>
+      <ul className="text-xs list-disc ml-4">
+        {globalAccessories.map((acc) => (
+          <li key={acc.id}>
+            {acc.accessory_name} {acc.price ? `- ₹${acc.price}` : ""}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {placedMachines.length > 0 && (
+    <div>
+      <h3 className="text-sm font-semibold">Placed Machines</h3>
+      {/* existing machine metrics */}
+    </div>
+  )}
+</div>
+
 
     </div>
   </div>
