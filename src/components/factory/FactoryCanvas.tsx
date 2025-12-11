@@ -380,89 +380,91 @@ const drawGrid = (canvas: FabricCanvas) => {
   //
   // Add a machine group to canvas. IMPORTANT: group origin set to left/top so left/top match bounding rect top-left.
   //
-  const addMachineToCanvas = (machine: Machine) => {
-    if (!fabricCanvas) return;
+const addMachineToCanvas = (machine: Machine) => {
+  if (!fabricCanvas) return;
 
-    const rectWidth = (machine.width_mm * PIXELS_PER_METER) / 1000;
-    const rectHeight = (machine.length_mm * PIXELS_PER_METER) / 1000;
+  const rectWidth = (machine.width_mm * PIXELS_PER_METER) / 1000;
+  const rectHeight = (machine.length_mm * PIXELS_PER_METER) / 1000;
 
-    // Use left/top origins for rect and group so placement math is simple
-    const machineRect = new Rect({
-      left: 0,
-      top: 0,
-      width: rectWidth,
-      height: rectHeight,
-      fill: "#3B82F6",
-      opacity: 0.85,
-      stroke: "#1D4ED8",
-      strokeWidth: 2,
-      rx: 4,
+  const machineRect = new Rect({
+    left: 0,
+    top: 0,
+    width: rectWidth,
+    height: rectHeight,
+    fill: "#3B82F6",
+    opacity: 0.85,
+    stroke: "#1D4ED8",
+    strokeWidth: 2,
+    rx: 4,
+    originX: "left",
+    originY: "top",
+    selectable: false,
+    evented: false,
+  });
+
+  const nameLabel = new Textbox(machine.machine_name, {
+    left: 6,
+    top: 6,
+    fontSize: 14,
+    fill: "#fff",
+    fontWeight: "bold",
+    originX: "left",
+    originY: "top",
+    selectable: false,
+    evented: false,
+  });
+
+  // Auto-scale name text to fit width
+  autoScaleText(nameLabel, rectWidth - 12);
+
+  const dimensionLabel = new Text(
+    `${(machine.width_mm / 1000).toFixed(2)}m × ${(machine.length_mm / 1000).toFixed(2)}m`,
+    {
+      left: 6,
+      top: rectHeight - 18,
+      fontSize: 12,
+      fill: "#fff",
       originX: "left",
       originY: "top",
       selectable: false,
       evented: false,
-    });
-    
-const nameLabel = new Textbox(machine.machine_name, {
-  left: 6,
-  top: 6,
-  fontSize: 14,
-  fill: "#fff",
-  fontWeight: "bold",
-  originX: "left",
-  originY: "top",
-  selectable: false,
-  evented: false,
-});
-
-    autoScaleText(nameLabel, rectWidth - 12);
-
-
-    const dimensionLabel = new Text(
-      `${(machine.width_mm / 1000).toFixed(2)}m × ${(machine.length_mm / 1000).toFixed(2)}m`,
-      {
-        left: 6,
-        top: rectHeight - 18,
-        fontSize: 12,
-        fill: "#fff",
-        originX: "left",
-        originY: "top",
-        selectable: false,
-        evented: false,
-      }
-    );
-
-    // Important: group origin left/top so group.left/top match group's top-left
-    const group = new Group([machineRect, nameLabel, dimensionLabel], {
-      left: 50,
-      top: 50,
-      originX: "left",
-      originY: "top",
-      hasControls: true,
-      hasBorders: true,
-      lockScalingFlip: true,
-        lockScalingX: true,       // prevent horizontal resize
-  lockScalingY: true,       // prevent vertical resize
-    });
-
-    (group as any).machineData = machine;
-
-    fabricCanvas.add(group);
-    fabricCanvas.setActiveObject(group);
-    fabricCanvas.requestRenderAll();
-
-    // after adding, update numeric coordinates for selection
-    if (isFabricGroup(group)) {
-      const { x, y } = fabricToCartesian(group);
-      setMachineX(x);
-      setMachineY(y);
     }
+  );
 
-    checkCollisions(fabricCanvas);
-    updatePlacedMachines();
-    drawEdgeDistanceLines(fabricCanvas)
-   toast.success(`${machine.machine_name} added to layout`);
-  };
+  // Auto-scale dimensions text as well
+  autoScaleText(dimensionLabel, rectWidth - 12);
+
+  const group = new Group([machineRect, nameLabel, dimensionLabel], {
+    left: 50,
+    top: 50,
+    originX: "left",
+    originY: "top",
+    hasControls: true,
+    hasBorders: true,
+    lockScalingFlip: true,
+    lockScalingX: true,
+    lockScalingY: true,
+  });
+
+  (group as any).machineData = machine;
+
+  fabricCanvas.add(group);
+  fabricCanvas.setActiveObject(group);
+  fabricCanvas.requestRenderAll();
+
+  // Update coordinates after adding
+  if (isFabricGroup(group)) {
+    const { x, y } = fabricToCartesian(group);
+    setMachineX(x);
+    setMachineY(y);
+  }
+
+  checkCollisions(fabricCanvas);
+  updatePlacedMachines();
+  drawEdgeDistanceLines(fabricCanvas);
+  toast.success(`${machine.machine_name} added to layout`);
+};
+
 
   //
   // Collision detection (uses bounding boxes)
