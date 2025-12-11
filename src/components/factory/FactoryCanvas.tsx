@@ -427,6 +427,8 @@ const drawGrid = (canvas: FabricCanvas) => {
       hasControls: true,
       hasBorders: true,
       lockScalingFlip: true,
+        lockScalingX: true,       // prevent horizontal resize
+  lockScalingY: true,       // prevent vertical resize
     });
 
     (group as any).machineData = machine;
