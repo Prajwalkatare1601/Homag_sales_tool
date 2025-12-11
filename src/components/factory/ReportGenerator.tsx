@@ -7,7 +7,9 @@ import { toast } from "sonner";
 export const generateReport = async (
   canvasElement: HTMLCanvasElement,
   placedMachines: PlacedMachine[],
-  layoutDimensions: { width: number; height: number }
+  layoutDimensions: { width: number; height: number },
+  globalAccessories: any[],
+  globalSoftwares: any[],
 ) => {
   try {
     toast.loading("Generating professional report...");
@@ -61,11 +63,78 @@ export const generateReport = async (
     y += 10;
 
     // Summary Grid
-    const summaryData = [
-      ["Total Machines", `${placedMachines.length}`, "Floor Area", `${layoutDimensions.width}m x ${layoutDimensions.height}m (${layoutDimensions.width * layoutDimensions.height} m²)`],
-      ["Total CapEx", `₹ ${(placedMachines.reduce((s, m) => s + (m.price_capex ?? 0), 0) / 10000000).toFixed(2)} Cr`, "Est. OpEx (Annual)", `₹ ${(placedMachines.reduce((s, m) => s + (m.price_opex ?? 0), 0) / 10000000).toFixed(2)} Cr`],
-      ["Total Power Load", `${placedMachines.reduce((s, m) => s + (m.connected_load_kw ?? 0), 0).toFixed(1)} kW`, "Air Consumption", `${placedMachines.reduce((s, m) => s + (m.air_consumption_m3hr ?? 0), 0).toFixed(1)} m³/hr`]
-    ];
+// CAPEX / OPEX
+const totalMachineCapex = placedMachines.reduce((s, m) => s + (m.price_capex ?? 0), 0);
+const totalMachineOpex = placedMachines.reduce((s, m) => s + (m.price_opex ?? 0), 0);
+const totalOptionals = placedMachines.reduce((s, m) => s + (m.optionalsCost ?? 0), 0);
+
+// ACCESSORIES & SOFTWARE (supporting qty)
+const totalAccessories = globalAccessories.reduce(
+  (s, a) => s + (a.price * (a.qty ?? 1)),
+  0
+);
+
+const totalSoftwares = globalSoftwares.reduce(
+  (s, sw) => s + (sw.price * (sw.qty ?? 1)),
+  0
+);
+
+// === TOTAL MACHINE AREA ===
+// Area = (length_mm / 1000) * (width_mm / 1000)
+const totalMachineArea = placedMachines.reduce((s, m) => {
+  const L = (m.length_mm ?? 0) / 1000;
+  const W = (m.width_mm ?? 0) / 1000;
+  return s + (L * W);
+}, 0);
+
+// === ROI (Years) ===
+const roiPeriodYears = 
+  placedMachines.length > 0
+    ? placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
+      (placedMachines.length + 350) // as per your existing formula
+    : 0;
+
+
+// === GRAND TOTAL ===
+const grandTotalCost =
+  totalMachineCapex + totalOptionals + totalAccessories + totalSoftwares;
+
+
+// === SUMMARY TABLE ===
+const summaryData = [
+  [
+    "Total Machines",
+    `${placedMachines.length}`,
+    "Floor Area",
+    `${layoutDimensions.width}m x ${layoutDimensions.height}m (${layoutDimensions.width * layoutDimensions.height} m²)`
+  ],
+    [
+    "Total Machine Area",
+    `${totalMachineArea.toFixed(2)} m²`,
+    "Estimated ROI Period",
+    `${roiPeriodYears} Years`
+  ],
+  [
+    "Total CapEx",
+    `Rs.${(totalMachineCapex / 100000).toFixed(2)} Lakhs`,
+    "Est. OpEx (Annual)",
+    `Rs.${totalMachineOpex.toLocaleString()}`
+  ],
+
+  [
+    "Total Optionals Cost",
+    `Rs. ${totalOptionals.toLocaleString()}`,
+    "Accessories Cost",
+    `Rs. ${totalAccessories.toLocaleString()}`
+  ],
+  [
+    "Software Cost",
+    `Rs. ${totalSoftwares.toLocaleString()}`,
+    "GRAND TOTAL",
+    `Rs. ${grandTotalCost.toLocaleString()}`
+  ]
+];
+
 
     autoTable(pdf, {
       startY: y,
@@ -106,37 +175,116 @@ export const generateReport = async (
     y += finalImgHeight + 15;
 
     // === EQUIPMENT LIST ===
-    // Check if we need a new page
-    if (y > 250) {
-      pdf.addPage();
-      y = 20;
-    }
+// === EQUIPMENT SCHEDULE ===
+if (y > 250) {
+  pdf.addPage();
+  y = 20;
+}
 
-    pdf.setTextColor(...primaryColor);
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("EQUIPMENT SCHEDULE", 10, y);
-    pdf.line(10, y + 2, 200, y + 2);
-    y += 10;
+pdf.setTextColor(...primaryColor);
+pdf.setFontSize(12);
+pdf.setFont("helvetica", "bold");
+pdf.text("EQUIPMENT SCHEDULE", 10, y);
+pdf.line(10, y + 2, 200, y + 2);
+y += 10;
 
-    const machineData = placedMachines.map((m, i) => [
-      i + 1,
-      m.machine_name || "Unknown Machine",
-      m.type || "-",
-      `${m.length_mm || 0} x ${m.width_mm || 0}`,
-      m.connected_load_kw || "0",
-      m.air_consumption_m3hr || "0"
+// Build full table including machine, accessories, optionals, software
+const equipmentRows: any[] = [];
+let serial = 0; // sequential numbering
+let grandTotal = 0;
+const accessories = globalAccessories;
+const softwares = globalSoftwares;
+
+placedMachines.forEach((m, i) => {
+  const machinePrice = m.price_capex ?? 0;
+  const optionalPrice = m.optionalsCost ?? 0;
+  const optionals = m.selectedOptionals ?? [];
+
+  // Fetch global accessories & softwares for every machine
+  // (You may modify this mapping logic as needed)
+
+  const accessoriesTotal = accessories.reduce((s, a) => s + (a.price ?? 0), 0);
+  const softwareTotal = softwares.reduce((s, a) => s + (a.price ?? 0), 0);
+
+  const machineTotal = machinePrice + optionalPrice + accessoriesTotal + softwareTotal;
+  grandTotal += machineTotal;
+
+  // Machine Main Row
+  equipmentRows.push([
+    serial++,
+    m.machine_name || "Unknown Machine",
+    m.type || "-",
+    `${m.length_mm || 0} x ${m.width_mm || 0}`,
+    "1",
+    `Rs. ${machinePrice.toLocaleString()}`,
+    ""
+  ]);
+
+    // Optional Items
+ optionals.forEach(opt => {
+    equipmentRows.push([
+      "",
+      "Optional",
+      opt.optional_name,     // ← SAME AS YOUR UI
+      "",
+      "1",
+      `Rs. ${opt.price.toLocaleString()}`
     ]);
+  });
+});
 
-    autoTable(pdf, {
-      startY: y,
-      head: [["#", "Machine Name", "Type", "Dims (mm)", "Power (kW)", "Air (m³/hr)"]],
-      body: machineData,
-      theme: 'striped',
-      headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 3 },
-      alternateRowStyles: { fillColor: [245, 247, 250] }
-    });
+ // Accessories Rows
+  accessories.forEach(acc => {
+    equipmentRows.push([
+      serial++,
+      "Accessory",
+      acc.accessory_name,
+      "-",
+      acc.qty ?? 1,
+      `Rs. ${acc.price.toLocaleString()}`,
+      ""
+    ]);
+  });
+
+  // Software Rows
+  softwares.forEach(sw => {
+    equipmentRows.push([
+      serial++,
+      "Software",
+      sw.software_name,
+      "",
+      sw.qty ?? 1,
+      `Rs. ${sw.price.toLocaleString()}`,
+      ""
+    ]);
+  });
+
+
+
+  // Divider Row
+equipmentRows.push(["", "", "", "", "", ""]);
+// Append GRAND TOTAL Row
+equipmentRows.push([
+  "",
+  "",
+  "",
+  "",
+  "",
+  `GRAND TOTAL: Rs. ${grandTotal.toLocaleString()}`
+]);
+
+// Render Table
+autoTable(pdf, {
+  startY: y,
+head: [["S.No", "Item", "Name", "Dims", "Qty", "Price"]],
+  body: equipmentRows,
+  theme: "striped",
+  headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: "bold" },
+  styles: { fontSize: 9, cellPadding: 3 },
+  alternateRowStyles: { fillColor: [245, 247, 250] },
+});
+
+
 
     // === FOOTER ===
     const pageCount = pdf.getNumberOfPages();

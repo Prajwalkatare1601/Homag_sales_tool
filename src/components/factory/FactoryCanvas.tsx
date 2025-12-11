@@ -644,12 +644,6 @@ const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
     }
   };
 
-  const handleGenerateReport = async () => {
-    if (canvasRef.current) {
-      await generateReport(canvasRef.current, placedMachines, dimensions);
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-background overflow-x-scroll">
       {/* === TOP CONTROL BAR === */}
@@ -741,9 +735,6 @@ const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
               <Button variant="destructive" size="icon" onClick={handleDelete}><Trash2 className="h-4 w-4" /></Button>
             </>
           )}
-          <Button onClick={handleGenerateReport} variant="outline" size="icon" title="Generate Report">
-            <FileDown className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

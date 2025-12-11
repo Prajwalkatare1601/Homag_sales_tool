@@ -29,7 +29,7 @@ const Index = () => {
   const handleGenerateReport = () => {
     const canvas = document.querySelector("canvas");
     if (canvas) {
-      generateReport(canvas, placedMachines, layoutDimensions);
+      generateReport(canvas, placedMachines, layoutDimensions, globalAccessories, globalSoftwares);
     }
   };
 

@@ -334,46 +334,34 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
   ) : (
     <ul className="text-xs list-disc ml-4">
       {globalAccessories.map((acc) => (
-        <li key={acc.id}>{acc.accessory_name} - ₹{acc.price}</li>
-      ))}
+  <li key={acc.id}>
+    {acc.accessory_name} 
+    {acc.qty ? ` (x${acc.qty})` : " (x1)"} – 
+    ₹{(acc.price * (acc.qty ?? 1)).toLocaleString()}
+  </li>
+))}
     </ul>
   )}
 </div>
 
 
       {/* === SOFTWARES === */}
+{/* === SOFTWARES === */}
 <div>
-  {globalSoftwares.length > 0 && (
-    <div className="mb-4">
-      <h3 className="text-sm font-semibold">Selected Softwares</h3>
-      <ul className="text-xs list-disc ml-4">
-        {globalSoftwares.map((sw) => (
-          <li key={sw.id}>
-            {sw.software_name} {sw.price ? `- ₹${sw.price}` : ""}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )}
+  <h3 className="text-sm font-semibold">Softwares</h3>
 
-  {globalAccessories.length > 0 && (
-    <div className="mb-4">
-      <h3 className="text-sm font-semibold">Selected Accessories</h3>
-      <ul className="text-xs list-disc ml-4">
-        {globalAccessories.map((acc) => (
-          <li key={acc.id}>
-            {acc.accessory_name} {acc.price ? `- ₹${acc.price}` : ""}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )}
-
-  {placedMachines.length > 0 && (
-    <div>
-      <h3 className="text-sm font-semibold">Placed Machines</h3>
-      {/* existing machine metrics */}
-    </div>
+  {globalSoftwares.length === 0 ? (
+    <p className="text-xs text-slate-500">No softwares selected</p>
+  ) : (
+    <ul className="text-xs list-disc ml-4">
+      {globalSoftwares.map((sw) => (
+        <li key={sw.id}>
+          {sw.software_name}
+          {sw.qty ? ` (x${sw.qty})` : " (x1)"} – 
+          ₹{(sw.price * (sw.qty ?? 1)).toLocaleString()}
+        </li>
+      ))}
+    </ul>
   )}
 </div>
 

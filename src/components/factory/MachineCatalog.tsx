@@ -86,16 +86,21 @@ export const MachineCatalog = ({
 const [accessories, setAccessories] = useState<Accessory[]>([]);
 const [loadingAccessories, setLoadingAccessories] = useState(true);
 
-const [accessoryCategory, setAccessoryCategory] = useState<Accessory[]>([]);
+const [accessoryCategory, setAccessoryCategory] = useState<SelectedAccessory[]>([]);
 
 const [softwares, setSoftwares] = useState<Software[]>([]);
-const [selectedSoftwares, setSelectedSoftwares] = useState<Software[]>([]);
+const [selectedSoftwares, setSelectedSoftwares] = useState<SelectedSoftware[]>([]);
 const [loadingSoftwares, setLoadingSoftwares] = useState<boolean>(false);
 
 
 const [openAccessoriesDrawer, setOpenAccessoriesDrawer] = useState(false);
 const [openSoftwareDrawer, setOpenSoftwareDrawer] = useState(false);
 
+type SelectedAccessory = Accessory & {
+  qty: number;
+};
+
+type SelectedSoftware = Software & { qty: number };
 
 useEffect(() => {
   async function loadAccessories() {
@@ -345,28 +350,72 @@ return (
 
     <div className="max-h-[60vh] overflow-y-auto space-y-2">
       {accessories.map((item) => {
-        const selected = accessoryCategory.some((x) => x.id === item.id);
+        const existing = accessoryCategory.find((x) => x.id === item.id);
+        const selected = !!existing;
+
+        const updateQty = (delta) => {
+          setAccessoryCategory((prev) =>
+            prev.map((a) =>
+              a.id === item.id
+                ? { ...a, qty: Math.max(1, (a.qty || 1) + delta) }
+                : a
+            )
+          );
+        };
 
         return (
           <div
             key={item.id}
             className="flex items-center justify-between border p-2 rounded-lg"
           >
+            {/* NAME + PRICE */}
             <div className="text-xs">
               <p>{item.accessory_name}</p>
               <p className="text-[10px] text-green-600">₹{item.price}</p>
             </div>
 
-            <Checkbox
-              checked={selected}
-              onCheckedChange={() =>
-                setAccessoryCategory((prev) =>
-                  selected
-                    ? prev.filter((p) => p.id !== item.id)
-                    : [...prev, item]
-                )
-              }
-            />
+            <div className="flex items-center gap-2">
+
+              {/* QTY BUTTONS – only show if checked */}
+              {selected && (
+                <div className="flex items-center border rounded px-2">
+                  <button
+                    className="px-1 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQty(-1);
+                    }}
+                  >
+                    –
+                  </button>
+
+                  <span className="px-1 text-xs">
+                    {existing.qty || 1}
+                  </span>
+
+                  <button
+                    className="px-1 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQty(1);
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() =>
+                  setAccessoryCategory((prev) =>
+                    selected
+                      ? prev.filter((p) => p.id !== item.id)
+                      : [...prev, { ...item, qty: 1 }]
+                  )
+                }
+              />
+            </div>
           </div>
         );
       })}
@@ -380,21 +429,20 @@ return (
         Clear All
       </Button>
 
-      {/* APPLY BUTTON — CLOSES DRAWER */}
       <Button
         onClick={() => {
           if (onGlobalAccessoriesChange) {
-            onGlobalAccessoriesChange(accessoryCategory);   // send global list
+            onGlobalAccessoriesChange(accessoryCategory);
           }
-          setOpenAccessoriesDrawer(false); // close drawer
+          setOpenAccessoriesDrawer(false);
         }}
       >
         Apply
       </Button>
-
     </DrawerFooter>
   </DrawerContent>
 </Drawer>
+
 
 
 <p>Software Selection</p>
@@ -412,68 +460,111 @@ return (
     </Button>
   </DrawerTrigger>
 
-  <DrawerContent className="p-4">
-    <DrawerHeader>
-      <DrawerTitle>Select Softwares</DrawerTitle>
-    </DrawerHeader>
+<DrawerContent className="p-4">
+  <DrawerHeader>
+    <DrawerTitle>Select Softwares</DrawerTitle>
+  </DrawerHeader>
 
-    <div className="max-h-[60vh] overflow-y-auto space-y-2">
-      {loadingSoftwares ? (
-        <p className="text-xs text-slate-500">Loading softwares…</p>
-      ) : softwares.length === 0 ? (
-        <p className="text-xs text-slate-500">No softwares found.</p>
-      ) : (
-        softwares.map((sw) => {
-          const selected = selectedSoftwares.some((x) => x.id === sw.id);
+  <div className="max-h-[60vh] overflow-y-auto space-y-2">
+    {loadingSoftwares ? (
+      <p className="text-xs text-slate-500">Loading softwares…</p>
+    ) : softwares.length === 0 ? (
+      <p className="text-xs text-slate-500">No softwares found.</p>
+    ) : (
+      softwares.map((sw) => {
+        const existing = selectedSoftwares.find((x) => x.id === sw.id);
+        const selected = !!existing;
 
-          return (
-            <div
-              key={sw.id}
-              className="flex items-center justify-between border p-2 rounded-lg"
-            >
-              <div className="text-xs">
-                <p>{sw.software_name}</p>
-                {sw.price && (
-                  <p className="text-[10px] text-blue-600">₹{sw.price}</p>
-                )}
-              </div>
+        const updateQty = (delta: number) => {
+          setSelectedSoftwares((prev) =>
+            prev.map((s) =>
+              s.id === sw.id
+                ? { ...s, qty: Math.max(1, (s.qty || 1) + delta) }
+                : s
+            )
+          );
+        };
 
+        return (
+          <div
+            key={sw.id}
+            className="flex items-center justify-between border p-2 rounded-lg"
+          >
+            {/* NAME + PRICE */}
+            <div className="text-xs">
+              <p>{sw.software_name}</p>
+              <p className="text-[10px] text-blue-600">
+                ₹{sw.price}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+
+              {/* QTY BUTTONS – only if selected */}
+              {selected && (
+                <div className="flex items-center border rounded px-2">
+                  <button
+                    className="px-1 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQty(-1);
+                    }}
+                  >
+                    –
+                  </button>
+
+                  <span className="px-1 text-xs">
+                    {existing.qty || 1}
+                  </span>
+
+                  <button
+                    className="px-1 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQty(1);
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+
+              {/* CHECKBOX */}
               <Checkbox
                 checked={selected}
                 onCheckedChange={() =>
                   setSelectedSoftwares((prev) =>
                     selected
                       ? prev.filter((p) => p.id !== sw.id)
-                      : [...prev, sw]
+                      : [...prev, { ...sw, qty: 1 }]
                   )
                 }
               />
             </div>
-          );
-        })
-      )}
-    </div>
+          </div>
+        );
+      })
+    )}
+  </div>
 
-    <DrawerFooter className="flex justify-between">
-      <Button
-        variant="destructive"
-        onClick={() => setSelectedSoftwares([])}
-      >
-        Clear All
-      </Button>
+  <DrawerFooter className="flex justify-between">
+    <Button variant="destructive" onClick={() => setSelectedSoftwares([])}>
+      Clear All
+    </Button>
 
-      <Button
-        onClick={() => {
-          if (onGlobalSoftwaresChange) {
-            onGlobalSoftwaresChange(selectedSoftwares); // update global
-          }
-          setOpenSoftwareDrawer(false); // close drawer
-        }}
-      >
-        Apply
-      </Button>
-    </DrawerFooter>
-  </DrawerContent>
+    <Button
+      onClick={() => {
+        if (onGlobalSoftwaresChange) {
+          onGlobalSoftwaresChange(selectedSoftwares);
+        }
+        setOpenSoftwareDrawer(false);
+      }}
+    >
+      Apply
+    </Button>
+  </DrawerFooter>
+</DrawerContent>
+
 </Drawer>
 
 
