@@ -18,21 +18,25 @@ import {
 
 interface ProductivityMetricsProps {
   placedMachines: PlacedMachine[];
+  globalAccessories?: any[];              // ADD THIS
   layoutDimensions: { width: number; height: number };
   onGenerateReport: () => void;
 }
 
+
 export const ProductivityMetrics = ({
   placedMachines,
+  globalAccessories = [],
   layoutDimensions,
   onGenerateReport,
 }: ProductivityMetricsProps) => {
+
 
   // 🔍 DEBUG
   console.log("PLACED MACHINES FULL DATA:", placedMachines);
   console.log("RAW capex values:", placedMachines.map(m => m.price_capex));
 
-  if (!placedMachines.length) {
+if (placedMachines.length === 0 && globalAccessories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
         <Factory className="h-12 w-12 text-slate-400 mb-3" />
@@ -319,24 +323,20 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
         </ul>
       </div>
 
-      {/* === ACCESSORIES === */}
-      <div>
-        <p className="font-medium text-slate-700 mb-1">Accessories</p>
-        <ul className="space-y-1">
-          {placedMachines.some(m => m.selectedAccessories?.length) ? (
-            placedMachines.flatMap(m => m.selectedAccessories || []).map((acc, idx) => (
-              <li
-                key={idx}
-                className="bg-emerald-50 text-emerald-700 rounded-md px-2 py-1"
-              >
-                {acc.accessory_name} – ₹{acc.price}
-              </li>
-            ))
-          ) : (
-            <li className="text-slate-400 italic">No accessories selected</li>
-          )}
-        </ul>
-      </div>
+{/* === ACCESSORIES (GLOBAL) === */}
+<div>
+  <h3 className="text-sm font-semibold">Accessories (Global)</h3>
+  {globalAccessories.length === 0 ? (
+    <p className="text-xs text-slate-500">No accessories selected</p>
+  ) : (
+    <ul className="text-xs list-disc ml-4">
+      {globalAccessories.map((acc) => (
+        <li key={acc.id}>{acc.accessory_name} - ₹{acc.price}</li>
+      ))}
+    </ul>
+  )}
+</div>
+
 
       {/* === SOFTWARES === */}
       <div>

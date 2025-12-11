@@ -11,6 +11,18 @@ import {
 } from "@/components/ui/dialog";
 
 import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/drawer";
+
+import { Checkbox } from "@/components/ui/checkbox";
+
+
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -44,9 +56,14 @@ import { Check } from "lucide-react";
 
 interface MachineCatalogProps {
   onMachineSelect: (machine: Machine) => void;
+  onGlobalAccessoriesChange?: (accessories: Accessory[]) => void;
+
 }
 
-export const MachineCatalog = ({ onMachineSelect }: MachineCatalogProps) => {
+export const MachineCatalog = ({
+  onMachineSelect,
+  onGlobalAccessoriesChange
+}: MachineCatalogProps) =>{
   const [segment, setSegment] = useState("Kitchen");
   const [solution, setSolution] = useState("Panel Dividing");
   const [capacity, setCapacity] = useState("");
@@ -71,6 +88,9 @@ const [accessoryCategory, setAccessoryCategory] = useState<Accessory[]>([]);
 const [softwares, setSoftwares] = useState<Software[]>([]);
 const [selectedSoftwares, setSelectedSoftwares] = useState<Software[]>([]);
 const [loadingSoftwares, setLoadingSoftwares] = useState<boolean>(false);
+
+
+const [openAccessoriesDrawer, setOpenAccessoriesDrawer] = useState(false);
 
 
 useEffect(() => {
@@ -299,123 +319,79 @@ return (
           </div>
         </div>
 
+<p>Accessories Selection</p>
 {/* ACCESSORIES LIST - MULTISELECT WITH FETCHED DATA */}
-<div className="py-4">
-  <label className="text-xs font-bold text-slate-600">Accessories</label>
+<Drawer open={openAccessoriesDrawer} onOpenChange={setOpenAccessoriesDrawer}>
+  <DrawerTrigger asChild>
+    <Button
+      variant="outline"
+      className="w-full h-8 text-xs"
+      onClick={() => setOpenAccessoriesDrawer(true)}
+    >
+      {accessoryCategory.length > 0
+        ? `${accessoryCategory.length} selected`
+        : "Select Accessories"}
+    </Button>
+  </DrawerTrigger>
 
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        variant="outline"
-        className="w-full h-8 px-2 text-xs justify-between"
-      >
-        {accessoryCategory.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {accessoryCategory.map((acc) => (
-              <Badge
-                key={acc.id}
-                className="text-[10px] flex items-center gap-1"
-              >
-                {acc.accessory_name}
+  <DrawerContent className="p-4">
+    <DrawerHeader>
+      <DrawerTitle>Select Accessories</DrawerTitle>
+    </DrawerHeader>
 
-                {/* REMOVE BUTTON */}
-                <button
-                  className="text-red-500 text-[10px] ml-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAccessoryCategory((prev: any[]) =>
-                      prev.filter((p) => p.id !== acc.id)
-                    );
-                  }}
-                >
-                  ✕
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          "Select Accessories"
-        )}
-      </Button>
-    </PopoverTrigger>
+    <div className="max-h-[60vh] overflow-y-auto space-y-2">
+      {accessories.map((item) => {
+        const selected = accessoryCategory.some((x) => x.id === item.id);
 
-    <PopoverContent className="w-[240px] p-0">
-      {loadingAccessories ? (
-        <div className="p-2 text-xs text-slate-500">Loading...</div>
-      ) : (
-        <Command>
-          {/* SEARCH */}
-          <div className="p-2">
-            <CommandInput placeholder="Search accessories..." />
-          </div>
-
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-
-            <CommandGroup>
-              {accessories.map((item) => {
-                const selected = accessoryCategory.some((x) => x.id === item.id);
-
-                return (
-                  <CommandItem
-                    key={item.id}
-                    value={item.accessory_name}
-                    className="flex items-center justify-between"
-                    onSelect={() => {
-                      setAccessoryCategory((prev: any[]) =>
-                        selected
-                          ? prev.filter((p) => p.id !== item.id)
-                          : [...prev, item]
-                      );
-                    }}
-                  >
-                    <div>
-                      <span className="text-xs">{item.accessory_name}</span>
-                      {item.price && (
-                        <p className="text-[10px] text-green-600">
-                          ₹{item.price}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* ADD BUTTON */}
-                    <Button
-                      variant={selected ? "destructive" : "secondary"}
-                      className="h-5 text-[10px] px-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAccessoryCategory((prev: any[]) =>
-                          selected
-                            ? prev.filter((p) => p.id !== item.id)
-                            : [...prev, item]
-                        );
-                      }}
-                    >
-                      {selected ? "Remove" : "Add"}
-                    </Button>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-
-          {/* CLEAR ALL BUTTON */}
-          {accessoryCategory.length > 0 && (
-            <div className="p-2 border-t bg-slate-50">
-              <Button
-                variant="destructive"
-                className="w-full h-7 text-xs"
-                onClick={() => setAccessoryCategory([])}
-              >
-                Clear All
-              </Button>
+        return (
+          <div
+            key={item.id}
+            className="flex items-center justify-between border p-2 rounded-lg"
+          >
+            <div className="text-xs">
+              <p>{item.accessory_name}</p>
+              <p className="text-[10px] text-green-600">₹{item.price}</p>
             </div>
-          )}
-        </Command>
-      )}
-    </PopoverContent>
-  </Popover>
-</div>
+
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() =>
+                setAccessoryCategory((prev) =>
+                  selected
+                    ? prev.filter((p) => p.id !== item.id)
+                    : [...prev, item]
+                )
+              }
+            />
+          </div>
+        );
+      })}
+    </div>
+
+    <DrawerFooter>
+      <Button
+        variant="destructive"
+        onClick={() => setAccessoryCategory([])}
+      >
+        Clear All
+      </Button>
+
+      {/* APPLY BUTTON — CLOSES DRAWER */}
+      <Button
+        onClick={() => {
+          if (onGlobalAccessoriesChange) {
+            onGlobalAccessoriesChange(accessoryCategory);   // send global list
+          }
+          setOpenAccessoriesDrawer(false); // close drawer
+        }}
+      >
+        Apply
+      </Button>
+
+    </DrawerFooter>
+  </DrawerContent>
+</Drawer>
+
 
 
 {/* SOFTWARES LIST - MULTISELECT WITH FETCHED DATA */}

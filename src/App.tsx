@@ -11,8 +11,6 @@ import {
 import Index from "./pages/Index";
 import Login from "./pages/Login"; // <-- Add this
 import NotFound from "./pages/NotFound";
-import TestPage from "./pages/test";  // <-- ADD THIS
-
 
 const queryClient = new QueryClient();
 
@@ -30,7 +28,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/test" element={<TestPage />} />   {/* <-- ADD THIS */}
           <Route path="/" element={<Login />} />
           <Route
             path="/authenticated"
