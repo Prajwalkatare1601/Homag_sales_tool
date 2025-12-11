@@ -87,7 +87,7 @@ let y = 35;
 pdf.setTextColor(...primaryColor);
 pdf.setFontSize(12);
 pdf.setFont("helvetica", "bold");
-pdf.text("USER DETAILS", 10, y);
+pdf.text("CUSTOMER DETAILS", 10, y);
 pdf.setLineWidth(0.5);
 pdf.setDrawColor(...accentColor);
 pdf.line(10, y + 2, 200, y + 2);
