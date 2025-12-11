@@ -7,6 +7,7 @@ import {
   Group,
   Line,
   Point,
+  Textbox,
 } from "fabric";
 import { Machine, PlacedMachine } from "@/types/machine";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,16 @@ import { generateReport } from "./ReportGenerator.tsx";
     isDistanceLine?: boolean;
     isCollisionText?: boolean;
     machineData?: any;
+  }
+}
+function autoScaleText(textObj:Textbox | Text, maxWidth: number) {
+  const bounding = textObj.getBoundingRect().width;
+
+  if (bounding > maxWidth) {
+    const scale = maxWidth / bounding;
+    textObj.scaleX = scale;
+  } else {
+    textObj.scaleX = 1; // reset if smaller than maxWidth
   }
 }
 
@@ -391,18 +402,21 @@ const drawGrid = (canvas: FabricCanvas) => {
       selectable: false,
       evented: false,
     });
+    
+const nameLabel = new Textbox(machine.machine_name, {
+  left: 6,
+  top: 6,
+  fontSize: 14,
+  fill: "#fff",
+  fontWeight: "bold",
+  originX: "left",
+  originY: "top",
+  selectable: false,
+  evented: false,
+});
 
-    const nameLabel = new Text(machine.machine_name, {
-      left: 6,
-      top: 6,
-      fontSize: 14,
-      fill: "#fff",
-      fontWeight: "bold",
-      originX: "left",
-      originY: "top",
-      selectable: false,
-      evented: false,
-    });
+    autoScaleText(nameLabel, rectWidth - 12);
+
 
     const dimensionLabel = new Text(
       `${(machine.width_mm / 1000).toFixed(2)}m × ${(machine.length_mm / 1000).toFixed(2)}m`,
