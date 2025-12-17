@@ -111,7 +111,7 @@ const handleGenerateReport = (userInfo: {
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT PANEL — Machine Catalog */}
         <motion.div
-          animate={{ width: catalogCollapsed ? "64px" : "320px" }}
+          animate={{ width: catalogCollapsed ? "70px" : "360px" }}
           transition={{ duration: 0.3 }}
           className="relative flex-shrink-0 border-r border-slate-200 bg-white/80 backdrop-blur-md shadow-inner"
         >
@@ -176,7 +176,7 @@ const handleGenerateReport = (userInfo: {
 
         {/* RIGHT PANEL — Productivity Metrics */}
         <motion.div
-          animate={{ width: metricsCollapsed ? "64px" : "320px" }}
+          animate={{ width: metricsCollapsed ? "64px" : "360px" }}
           transition={{ duration: 0.3 }}
           className="relative flex-shrink-0 border-l border-slate-200 bg-white/80 backdrop-blur-md shadow-inner"
         >

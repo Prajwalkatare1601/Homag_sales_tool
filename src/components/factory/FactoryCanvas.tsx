@@ -22,7 +22,6 @@ import {
   FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { generateReport } from "./ReportGenerator.tsx";
 
   const isGroup = (obj: FabricObject): obj is Group => {
   return obj.type === "group";
