@@ -200,7 +200,7 @@ const summaryData = [
     "Software Cost",
     `Rs. ${totalSoftwares.toLocaleString()}`,
     "GRAND TOTAL",
-    `Rs. ${grandTotalCost.toLocaleString()}`
+    `** Rs. ${grandTotalCost.toLocaleString()}`
   ]
 ];
 
@@ -337,8 +337,8 @@ equipmentRows.push([
   "",
   "",
   "",
-  "GRAND TOTAL",
-  `Rs. ${grandTotalCost.toLocaleString()}`
+  "** GRAND TOTAL",
+  `** Rs. ${grandTotalCost.toLocaleString()}`
 ]);
 
 // Render table
@@ -361,10 +361,20 @@ autoTable(pdf, {
       pdf.setPage(i);
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
-      pdf.text("Confidential - Homag India Pvt. Ltd.", 10, 290);
+      pdf.text("Confidential - Homag India Pvt. Ltd.", 8, 290);
+        // Disclaimer line (wrapped)
+      pdf.text(
+        "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. ",
+        8,
+        278,
+      );
+      pdf.text(
+        "** Final commercial terms shall be subject to formal quotation and applicable regulations.",
+        8,
+        282,
+      );
       pdf.text(`Page ${i} of ${pageCount}`, 200, 290, { align: "right" });
     }
-
     // === SAVE ===
     pdf.save(`Homag_Layout_Proposal_${Date.now()}.pdf`);
     toast.dismiss();
