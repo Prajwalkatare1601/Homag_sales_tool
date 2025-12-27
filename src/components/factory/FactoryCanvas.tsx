@@ -380,6 +380,7 @@ const drawGrid = (canvas: FabricCanvas) => {
   // Add a machine group to canvas. IMPORTANT: group origin set to left/top so left/top match bounding rect top-left.
   //
 const addMachineToCanvas = (machine: Machine) => {
+  
   if (!fabricCanvas) return;
 
   const rectWidth = (machine.width_mm * PIXELS_PER_METER) / 1000;
@@ -400,6 +401,29 @@ const addMachineToCanvas = (machine: Machine) => {
     selectable: false,
     evented: false,
   });
+
+const WORKING_AREA_MARGIN_M = 0.5;
+const workingMarginPx = WORKING_AREA_MARGIN_M * PIXELS_PER_METER;
+
+const workingWidth = rectWidth + workingMarginPx * 2;
+const workingHeight = rectHeight + workingMarginPx * 2;
+const workingAreaRect = new Rect({
+  left: -workingMarginPx,
+  top: -workingMarginPx,
+  width: workingWidth,
+  height: workingHeight,
+  fill: "rgba(34,197,94,0.15)", // soft green
+  stroke: "#22c55e",
+  strokeDashArray: [8, 6],
+  strokeWidth: 2,
+  rx: 8,
+  ry: 8,
+  originX: "left",
+  originY: "top",
+  selectable: false,
+  evented: false,
+});
+
 
   const nameLabel = new Textbox(machine.machine_name, {
     left: 6,
@@ -433,7 +457,15 @@ const addMachineToCanvas = (machine: Machine) => {
   // Auto-scale dimensions text as well
   autoScaleText(dimensionLabel, rectWidth - 12);
 
-  const group = new Group([machineRect, nameLabel, dimensionLabel], {
+  
+const group = new Group(
+  [
+    workingAreaRect, // 👈 must be first (bottom layer)
+    machineRect,
+    nameLabel,
+    dimensionLabel,
+  ],
+  {
     left: 50,
     top: 50,
     originX: "left",
@@ -443,9 +475,14 @@ const addMachineToCanvas = (machine: Machine) => {
     lockScalingFlip: true,
     lockScalingX: true,
     lockScalingY: true,
-  });
+  }
+);
+
 
   (group as any).machineData = machine;
+  (machineRect as any).isMachineBody = true;
+  (workingAreaRect as any).isWorkingArea = true;
+
 
   fabricCanvas.add(group);
   fabricCanvas.setActiveObject(group);
@@ -479,11 +516,25 @@ const checkCollisions = (canvas: FabricCanvas) => {
   let collisionDetected = false;
 
   // Reset all machine colors
-  objects.forEach((obj) => {
-    if (isGroup(obj)) {
-      obj.item(0).set({ stroke: "#1D4ED8", fill: "#3B82F6" });
+objects.forEach((obj) => {
+  if (!isGroup(obj)) return;
+
+  obj.getObjects().forEach((child) => {
+    if ((child as any).isWorkingArea) {
+      child.set({
+        stroke: "#22c55e",
+        fill: "rgba(34,197,94,0.15)",
+      });
+    }
+
+    if ((child as any).isMachineBody) {
+      child.set({
+        stroke: "#1D4ED8",
+        fill: "#3B82F6",
+      });
     }
   });
+});
 
   // Detect overlaps
   for (let i = 0; i < objects.length; i++) {
