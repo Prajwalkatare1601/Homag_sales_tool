@@ -6,19 +6,19 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Navigate, // <-- Add this
+  Navigate,
 } from "react-router-dom";
+
 import Index from "./pages/Index";
-import Login from "./pages/Login"; // <-- Add this
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-
-
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  return isAuthenticated ? children : <Navigate to="/" replace />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 const App = () => (
@@ -28,7 +28,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Login />} />
+          {/* Auth */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Protected */}
           <Route
             path="/authenticated"
             element={
@@ -37,6 +42,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Machine, PlacedMachine,Accessory,Software } from "@/types/machine";
 import { MachineCatalog } from "@/components/factory/MachineCatalog";
 import { FactoryCanvas } from "@/components/factory/FactoryCanvas";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
+import supabase from "../supabase/server";
 
 
 
@@ -21,6 +22,38 @@ const Index = () => {
   const [globalAccessories, setGlobalAccessories] = useState<Accessory[]>([]);
   const [globalSoftwares, setGlobalSoftwares] = useState<Software[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<{
+  name: string;
+  email: string;
+  phone?: string;
+  designation?: string;
+} | null>(null);
+
+useEffect(() => {
+  const loadProfile = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("name, email, phone, designation")
+      .eq("id", user.id)
+      .maybeSingle(); // ✅ prevents 406 error
+
+    if (error) {
+      console.error("Failed to load profile", error);
+      return;
+    }
+
+    setProfile(data);
+  };
+
+  loadProfile();
+}, []);
+
   const navigate = useNavigate(); // <-- must be inside the component
 
 
@@ -49,7 +82,12 @@ const handleGenerateReport = (userInfo: {
     );
   }
 };
-
+const initials =
+  profile?.name
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase() || "U";
 
 
   return (
@@ -76,16 +114,32 @@ const handleGenerateReport = (userInfo: {
 
   {/* Right Section — Logged-in User */}
 <div className="relative flex items-center gap-3 mr-4">
-  {/* User Avatar (placeholder circle) */}
+<div className="relative flex items-center gap-3 mr-4">
+  {/* Avatar */}
   <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold text-slate-700 shadow-inner">
-    ad
+    {initials}
   </div>
-  <div className="flex flex-col text-right leading-tight cursor-pointer" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-    <span className="text-sm font-medium text-white flex items-center justify-end gap-1">
-      admin <ChevronDown className={`h-3 w-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
-    </span>
-    <span className="text-[10px] text-slate-300">ID: HMG-1423</span>
+
+  {/* Name + dropdown */}
+<div
+  className="flex flex-col items-start text-left leading-tight cursor-pointer"
+  onClick={() => setUserMenuOpen(!userMenuOpen)}
+>
+<span className="text-sm font-medium text-white flex items-center gap-1">
+  {profile?.name || "Homag User"}
+  <ChevronDown
+    className={`h-3 w-3 transition-transform ${
+      userMenuOpen ? "rotate-180" : ""
+    }`}
+  />
+</span>
+
+<span className="text-[10px] text-slate-300">
+  {profile?.designation || "Sales Team"}
+</span>
+
   </div>
+</div>
 
   {/* Dropdown Menu */}
   {userMenuOpen && (

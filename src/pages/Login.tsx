@@ -43,7 +43,29 @@ const Login = () => {
     }
 
     setLoading(false);
-  };
+
+   // ✅ FETCH PROFILE AFTER LOGIN
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .single();
+
+  if (profileError) {
+    console.error("Profile fetch failed:", profileError);
+    toast.error("Unable to load user profile.");
+    setLoading(false);
+    return;
+  }
+
+  // ✅ OPTIONAL: Store profile for later use
+  localStorage.setItem("isAuthenticated", "true");
+  localStorage.setItem("userProfile", JSON.stringify(profile));
+
+  toast.success(`Welcome ${profile.name}!`);
+  navigate("/authenticated");
+
+  setLoading(false);
+};
 
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
@@ -87,6 +109,16 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </Button>
+          <p className="text-sm text-center text-slate-600 mt-4">
+  Don’t have an account?{" "}
+  <button
+    className="text-blue-600 hover:underline"
+    onClick={() => navigate("/register")}
+  >
+    Register
+  </button>
+</p>
+
         </form>
 
         <p className="text-xs text-slate-400 text-center mt-4">
