@@ -351,7 +351,7 @@ placedMachines.forEach((m) => {
       "",
       "Optional",
       opt.optional_name,
-      "",
+      "-",
       optQty,
       `Rs. ${optPrice.toLocaleString()}`,
       `Rs. ${calcTotal(optPrice, optQty).toLocaleString()}`
@@ -382,7 +382,7 @@ globalSoftwares.forEach((sw) => {
     serial++,
     "Software",
     sw.software_name,
-    "",
+    "-",
     swQty,
     `Rs. ${swPrice.toLocaleString()}`,
     `Rs. ${calcTotal(swPrice, swQty).toLocaleString()}`
@@ -395,9 +395,9 @@ equipmentRows.push([
   serial++,
   "Miscellaneous",
   "Operational Cost",
-  "NA",
-  "NA",
-  "`Rs. ${operationalCostValue.toLocaleString()}`",
+  "-",
+  "-",
+  "-",
   `Rs. ${operationalCostValue.toLocaleString()}`
 ]);
 

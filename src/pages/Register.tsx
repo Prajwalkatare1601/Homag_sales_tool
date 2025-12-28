@@ -19,6 +19,20 @@ const handleRegister = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
 
+  // Email validation
+  if (!email.toLowerCase().endsWith("@homag.com")) {
+    toast.error("Only @homag.com email addresses are allowed.");
+    setLoading(false);
+    return;
+  }
+
+  // Phone validation (must be exactly 10 digits)
+  if (phone.length !== 10) {
+    toast.error("Phone number must be exactly 10 digits.");
+    setLoading(false);
+    return;
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -44,6 +58,8 @@ const handleRegister = async (e: React.FormEvent) => {
   navigate("/login");
   setLoading(false);
 };
+
+
 
 
   return (
@@ -73,6 +89,7 @@ const handleRegister = async (e: React.FormEvent) => {
                     {/* Phone */}
 
           <div>
+<div>
   <label className="text-sm font-medium text-slate-700">
     Phone Number
   </label>
@@ -80,8 +97,16 @@ const handleRegister = async (e: React.FormEvent) => {
     type="tel"
     placeholder="1234567890"
     value={phone}
-    onChange={(e) => setPhone(e.target.value)}
+    onChange={(e) => {
+      // Allow only digits and limit to 10 characters
+      const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+      setPhone(value);
+    }}
+    maxLength={10} // optional HTML-level enforcement
+    required
   />
+</div>
+
 </div>
 
                     {/* Designation */}
@@ -94,6 +119,7 @@ const handleRegister = async (e: React.FormEvent) => {
     placeholder="Sales Engineer / Manager"
     value={designation}
     onChange={(e) => setDesignation(e.target.value)}
+    required
   />
 </div>
 
