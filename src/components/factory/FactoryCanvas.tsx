@@ -440,6 +440,43 @@ const workingAreaRect = new Rect({
   // Auto-scale name text to fit width
   autoScaleText(nameLabel, rectWidth - 12);
 
+
+
+const avgBoardsPerShift =
+  Number.isFinite(machine.productivity_boards_min)
+    ? Math.round(
+        (Number(machine.productivity_boards_min ?? 0) +
+          Number(
+            machine.productivity_boards_max ??
+              machine.productivity_boards_min ??
+              0
+          )) / 2
+      )
+    : null;
+
+const nameLabelHeight = nameLabel.getScaledHeight();
+
+const productivityLabel =
+  avgBoardsPerShift !== null
+    ? new Text(`${avgBoardsPerShift} boards / shift`, {
+        left: 6,
+        top: 6 + nameLabelHeight + 4, // ⬅ dynamic spacing
+        fontSize: 11,
+        fill: "#E5F0FF",
+        fontWeight: "normal",
+        originX: "left",
+        originY: "top",
+        selectable: false,
+        evented: false,
+      })
+    : null;
+
+if (productivityLabel) {
+  autoScaleText(productivityLabel, rectWidth - 12);
+}
+
+
+
   const dimensionLabel = new Text(
     `${(machine.width_mm / 1000).toFixed(2)}m × ${(machine.length_mm / 1000).toFixed(2)}m`,
     {
@@ -460,9 +497,10 @@ const workingAreaRect = new Rect({
   
 const group = new Group(
   [
-    workingAreaRect, // 👈 must be first (bottom layer)
+    workingAreaRect,
     machineRect,
     nameLabel,
+    ...(productivityLabel ? [productivityLabel] : []),
     dimensionLabel,
   ],
   {

@@ -151,14 +151,41 @@ const totalMachineArea = placedMachines.reduce((s, m) => {
   return s + (L * W);
 }, 0);
 
+
+const numMachines = placedMachines.length;
+const totalProductivity =
+  numMachines > 0
+    ? Math.round(
+        placedMachines.reduce(
+          (sum, m) =>
+            sum +
+            (
+              ((m.productivity_boards_min ?? 0) +
+               (m.productivity_boards_max ?? 0)) / 2
+            ),
+          0
+        ) / numMachines
+      )
+    : 0;
+
 // === ROI (Years) ===
 const roiPeriodYears =
   placedMachines.length > 0
-    ? Math.round(
-        (placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-          (placedMachines.length + 300)) *
-          10
-      ) / 10
+    ? (() => {
+        // Total investment
+        const totalCapex = placedMachines.reduce(
+          (sum, m) => sum + Number(m.price_capex ?? 0),
+          0
+        );
+        // Business rule:
+        // 100 boards / shift → ₹2.25L profit / month
+        const monthlyProfit = (totalProductivity / 100) * 250000;
+
+        // Breakeven in years
+        const breakevenYears = totalCapex / (monthlyProfit * 12 * 2);
+
+        return Math.round(breakevenYears * 10) / 10;
+      })()
     : 0;
 
 
@@ -181,7 +208,7 @@ const summaryData = [
     "Total Machine Area",
     `${totalMachineArea.toFixed(2)} m²`,
     "Estimated ROI Period",
-    `${roiPeriodYears} Years`
+    `* ${roiPeriodYears} Years`
   ],
   [
     "Total CapEx",
@@ -355,26 +382,46 @@ autoTable(pdf, {
 
 
 
-    // === FOOTER ===
-    const pageCount = pdf.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text("Confidential - Homag India Pvt. Ltd.", 8, 290);
-        // Disclaimer line (wrapped)
-      pdf.text(
-        "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. ",
-        8,
-        278,
-      );
-      pdf.text(
-        "** Final commercial terms shall be subject to formal quotation and applicable regulations.",
-        8,
-        282,
-      );
-      pdf.text(`Page ${i} of ${pageCount}`, 200, 290, { align: "right" });
-    }
+// === FOOTER ===
+const pageCount = pdf.getNumberOfPages();
+const pageMargin = 8;          // Left/right margin
+const footerYStart = 275;      // Starting Y position for disclaimer
+const lineSpacing = 4.5;       // Space between lines
+
+for (let i = 1; i <= pageCount; i++) {
+  pdf.setPage(i);
+
+  // Disclaimer section (appears above confidential)
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
+  pdf.setTextColor(120, 120, 120); // lighter gray
+
+  const disclaimerLines = [
+    "* ROI calculations are based on the assumption that the machines operate for two shifts per day. Actual returns may vary depending on operating hours and production efficiency.",
+    "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. Final commercial terms shall be subject to formal quotation and applicable regulations.",
+  ];
+
+  // Draw disclaimer lines starting at footerYStart
+  disclaimerLines.forEach((line, idx) => {
+    pdf.text(line, pageMargin, footerYStart + lineSpacing * idx);
+  });
+
+  // Company / Confidential (below disclaimer)
+  const confidentialY = footerYStart + lineSpacing * disclaimerLines.length + 2; // small gap after disclaimer
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(100, 100, 100); // Dark gray
+  pdf.text("Confidential - Homag India Pvt. Ltd.", pageMargin, confidentialY);
+
+  // Page number (right-aligned, same line as confidential)
+  pdf.setFontSize(8);
+  pdf.setTextColor(150, 150, 150);
+  pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.getWidth() - pageMargin, confidentialY, {
+    align: "right",
+  });
+}
+
+
     // === SAVE ===
     pdf.save(`Homag_Layout_Proposal_${Date.now()}.pdf`);
     toast.dismiss();

@@ -258,78 +258,91 @@ return (
                   <p className="text-center text-sm text-slate-500">No machines found.</p>
                 ) : (
                   filteredMachines.map((machine) => (
-<Card
-  key={machine.id}
-  className="p-3 rounded-xl border hover:shadow-md hover:bg-slate-50 transition-all"
->
-  <div className="flex items-center gap-3">
+                  <Card
+                    key={machine.id}
+                    className="p-3 rounded-xl border hover:shadow-md hover:bg-slate-50 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
 
-    {/* Thumbnail */}
-    <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 shrink-0">
-      <img src="favicon.png" className="object-contain w-8 h-8" />
-    </div>
+                      {/* Thumbnail */}
+                      <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 shrink-0">
+                        <img src="favicon.png" className="object-contain w-8 h-8" />
+                      </div>
 
-    {/* Info */}
-    <div className="flex-1 min-w-0">
-      <h3 className="font-semibold text-xs truncate">
-        {machine.machine_name}
-      </h3>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-xs truncate mb-0">
+                    {machine.machine_name}
+                  </h3>
 
-      {/* Meta actions */}
-      <div className="flex items-center gap-1 mt-1">
-        {machine.youtube_link && (
-          <button
-            className="text-[10px] px-2 py-0.5 rounded-md border text-red-600 border-red-300 hover:bg-red-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(machine.youtube_link, "_blank");
-            }}
-          >
-            YouTube
-          </button>
-        )}
-
-        {machine.machine_spec && (
-          <button
-            className="text-[10px] px-2 py-0.5 rounded-md border text-slate-600 border-slate-300 hover:bg-slate-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(machine.machine_spec, "_blank");
-            }}
-          >
-            Spec
-          </button>
-        )}
-      </div>
-    </div>
-
-    {/* Actions */}
-    <div className="flex flex-col gap-1 shrink-0">
-      <button
-        className="text-[10px] px-3 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleAddOptionals(machine);
-        }}
-      >
-        Optionals
-      </button>
-
-      <button
-        className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
-        onClick={(e) => {
-          e.stopPropagation();
-          onMachineSelect(machine);
-        }}
-      >
-        Add to Layout
-      </button>
-    </div>
-
-  </div>
-</Card>
+                  <p className="mt-0 leading-none">
+                    {Number.isFinite(machine.productivity_boards_min) && (
+                      <span className="text-[11px] leading-none font-normal text-slate-500">
+                        Avg ({Math.round(
+                          ((machine.productivity_boards_min ?? 0) +
+                            (machine.productivity_boards_max ??
+                              machine.productivity_boards_min ??
+                              0)) /
+                            2
+                        )} boards/shift)
+                      </span>
+                    )}
+                  </p>
 
 
+                        {/* Meta actions */}
+                        <div className="flex items-center gap-1 mt-1">
+                          {machine.youtube_link && (
+                            <button
+                              className="text-[10px] px-2 py-0.5 rounded-md border text-red-600 border-red-300 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(machine.youtube_link, "_blank");
+                              }}
+                            >
+                              YouTube
+                            </button>
+                          )}
+
+                          {machine.machine_spec && (
+                            <button
+                              className="text-[10px] px-2 py-0.5 rounded-md border text-slate-600 border-slate-300 hover:bg-slate-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(machine.machine_spec, "_blank");
+                              }}
+                            >
+                              Spec
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          className="text-[10px] px-3 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddOptionals(machine);
+                          }}
+                        >
+                          Optionals
+                        </button>
+
+                        <button
+                          className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMachineSelect(machine);
+                          }}
+                        >
+                          Add to Layout
+                        </button>
+                      </div>
+
+                    </div>
+                  </Card>
                   ))
                 )}
               </div>

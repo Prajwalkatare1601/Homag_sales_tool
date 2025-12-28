@@ -100,11 +100,19 @@ if (placedMachines.length === 0 && globalAccessories.length === 0 && globalSoftw
 
 const totalProductivity =
   numMachines > 0
-    ? placedMachines.reduce(
-        (sum, m) => sum + (m.productivity_components_min ?? 0),
-        0
-      ) / numMachines
+    ? Math.round(
+        placedMachines.reduce(
+          (sum, m) =>
+            sum +
+            (
+              ((m.productivity_boards_min ?? 0) +
+               (m.productivity_boards_max ?? 0)) / 2
+            ),
+          0
+        ) / numMachines
+      )
     : 0;
+
 
 
   const totalOperators = placedMachines.reduce(
@@ -167,12 +175,24 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
   // === Derived Financials ===
 const avgROI =
   placedMachines.length > 0
-    ? Math.round(
-        (placedMachines.reduce((sum, m) => sum + (m.roi_breakeven ?? 0), 0) /
-          (placedMachines.length + 300)) *
-          10
-      ) / 10
+    ? (() => {
+        // Total investment
+        const totalCapex = placedMachines.reduce(
+          (sum, m) => sum + Number(m.price_capex ?? 0),
+          0
+        );
+        // Business rule:
+        // 100 boards / shift → ₹2.25L profit / month
+        const monthlyProfit = (totalProductivity / 100) * 250000;
+
+        // Breakeven in years
+        const breakevenYears = totalCapex / (monthlyProfit * 12 * 2);
+
+        return Math.round(breakevenYears * 10) / 10;
+      })()
     : 0;
+
+
 
   // === Resource Estimates ===
   const glueConsumption = numMachines * 40;
@@ -241,7 +261,7 @@ const avgROI =
             <MetricCard
               title="Productivity Avg "
               value={totalProductivity}
-              unit="boards/day"
+              unit="boards/shift"
               icon={TrendingUp}
               color="#0EA5E9"
             />
@@ -320,7 +340,7 @@ const avgROI =
     />
 
     <MetricCard 
-      title="Estimated ROI Period" 
+      title="Estimated ROI Period *" 
       value={`${avgROI.toFixed(1)} years`} 
       icon={TrendingUp} 
       color="#059669" 
