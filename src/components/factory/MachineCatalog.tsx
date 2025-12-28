@@ -270,10 +270,12 @@ return (
                       </div>
 
                       {/* Info */}
-                      <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-xs truncate mb-0">
-                    {machine.machine_name}
-                  </h3>
+<div className="flex-1 min-w-0">
+<h3
+  className="font-semibold text-xs w-[138px] break-words whitespace-normal leading-snug"
+>
+  {machine.machine_name}
+</h3>
 
                   <p className="mt-0 leading-none">
                     {Number.isFinite(machine.productivity_boards_min) && (
@@ -291,31 +293,34 @@ return (
 
 
                         {/* Meta actions */}
-                        <div className="flex items-center gap-1 mt-1">
-                          {machine.youtube_link && (
-                            <button
-                              className="text-[10px] px-2 py-0.5 rounded-md border text-red-600 border-red-300 hover:bg-red-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(machine.youtube_link, "_blank");
-                              }}
-                            >
-                              YouTube
-                            </button>
-                          )}
+{/* Meta actions */}
+{solution !== "Press" && (
+  <div className="flex items-center gap-1 mt-1">
+    {machine.youtube_link && (
+      <button
+        className="text-[10px] px-2 py-0.5 rounded-md border text-red-600 border-red-300 hover:bg-red-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(machine.youtube_link, "_blank");
+        }}
+      >
+        YouTube
+      </button>
+    )}
 
-                          {machine.machine_spec && (
-                            <button
-                              className="text-[10px] px-2 py-0.5 rounded-md border text-slate-600 border-slate-300 hover:bg-slate-100"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(machine.machine_spec, "_blank");
-                              }}
-                            >
-                              Spec
-                            </button>
-                          )}
-                        </div>
+    {machine.machine_spec && (
+      <button
+        className="text-[10px] px-2 py-0.5 rounded-md border text-slate-600 border-slate-300 hover:bg-slate-100"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(machine.machine_spec, "_blank");
+        }}
+      >
+        Spec
+      </button>
+    )}
+  </div>
+)}
                       </div>
 
                       {/* Actions */}
