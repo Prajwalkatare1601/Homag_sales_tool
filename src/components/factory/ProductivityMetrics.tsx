@@ -469,13 +469,13 @@ const avgROI =
 {showUserForm && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
     <div className="bg-white rounded-lg shadow-lg w-96 p-6 relative">
-      <h2 className="text-lg font-semibold mb-4">Enter Your Details</h2>
+      <h2 className="text-lg font-semibold mb-4">Enter Customer Details</h2>
 
       <div className="flex flex-col gap-3">
         <input
           type="text"
           name="name"
-          placeholder="Name"
+          placeholder="Customer Name"
           value={userInfo.name}
           onChange={handleChange}
           className="border rounded-md px-3 py-2"

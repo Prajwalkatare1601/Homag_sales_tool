@@ -389,6 +389,18 @@ globalSoftwares.forEach((sw) => {
   ]);
 });
 
+// --- OPERATIONAL COST row ---
+const operationalCostValue = totalMachineOpex ?? 0; // make sure you have this value
+equipmentRows.push([
+  serial++,
+  "Miscellaneous",
+  "Operational Cost",
+  "NA",
+  "NA",
+  "`Rs. ${operationalCostValue.toLocaleString()}`",
+  `Rs. ${operationalCostValue.toLocaleString()}`
+]);
+
 // Divider row
 equipmentRows.push(["", "", "", "", "", "", ""]);
 
