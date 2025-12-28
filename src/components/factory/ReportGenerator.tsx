@@ -6,11 +6,19 @@ import { toast } from "sonner";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 
-interface UserInfo {
+interface CustomerInfo {
   name: string;
   company: string;
-  phone: string;
+  phone?: string;
   email: string;
+}
+
+interface SalesRepInfo {
+  name: string;
+  designation?: string;
+  phone?: string;
+  email?: string;
+  company?: string; // Optional, can default to Homag India
 }
 
 export const generateReport = async (
@@ -19,7 +27,8 @@ export const generateReport = async (
   layoutDimensions: { width: number; height: number },
   globalAccessories: any[],
   globalSoftwares: any[],
-  userInfo: UserInfo, // ✅ Use as object
+  customerInfo: CustomerInfo,
+  salesRep: SalesRepInfo // New: HOMAG sales rep
 ) => {
   try {
     toast.loading("Generating professional report...");
@@ -83,35 +92,61 @@ const formatPhoneForPDF = (phone: string) => {
 
 let y = 35;
 
-// === USER DETAILS ===
+// === USER DETAILS SIDE BY SIDE ===
+const leftX = 10; // left column
+const rightX = 110; // right column (approx middle of A4 width 210mm)
+let startY = y;
+
+const lineHeight = 5; // vertical spacing between lines
+const sectionSpacing = 8;
+
+// Header Titles
 pdf.setTextColor(...primaryColor);
 pdf.setFontSize(12);
 pdf.setFont("helvetica", "bold");
-pdf.text("CUSTOMER DETAILS", 10, y);
+
+// Column titles
+pdf.text("CUSTOMER DETAILS", leftX, startY);
+pdf.text("SALES REPRESENTATIVE", rightX, startY);
+
+// Draw underlines
 pdf.setLineWidth(0.5);
 pdf.setDrawColor(...accentColor);
-pdf.line(10, y + 2, 200, y + 2);
-y += 8;
+pdf.line(leftX, startY + 2, leftX + 90, startY + 2);   // left underline
+pdf.line(rightX, startY + 2, rightX + 90, startY + 2); // right underline
 
+startY += sectionSpacing;
+
+// Text content
 pdf.setFont("helvetica", "normal");
 pdf.setFontSize(10);
 pdf.setTextColor(...textGray);
 
-pdf.text(`Name: ${userInfo.name}`, 10, y);
-y += 5;
-pdf.text(`Company: ${userInfo.company}`, 10, y);
-y += 5;
-pdf.text(`Email: ${userInfo.email}`, 10, y);
-y += 5;
-if (userInfo.phone) {
-  const formattedPhone = formatPhoneForPDF(userInfo.phone);
-  pdf.text(`Phone: ${formattedPhone}`, 10, y);
-  y += 5;
+// Buyer info
+pdf.text(`Name: ${customerInfo.name}`, leftX, startY);
+pdf.text(`Company: ${customerInfo.company}`, leftX, startY + lineHeight);
+pdf.text(`Email: ${customerInfo.email}`, leftX, startY + 2 * lineHeight);
+if (customerInfo.phone) {
+  const formattedPhone = formatPhoneForPDF(customerInfo.phone);
+  pdf.text(`Phone: ${formattedPhone}`, leftX, startY + 3 * lineHeight);
 }
 
+// Seller info
+pdf.text(`Name: ${salesRep.name}`, rightX, startY);
+if (salesRep.designation) {
+  pdf.text(`Designation: ${salesRep.designation}`, rightX, startY + lineHeight);
+}
+if (salesRep.email) {
+  pdf.text(`Email: ${salesRep.email}`, rightX, startY + 2 * lineHeight);
+}
+if (salesRep.phone) {
+  const formattedPhone = formatPhoneForPDF(salesRep.phone);
+  pdf.text(`Phone: ${formattedPhone}`, rightX, startY + 3 * lineHeight);
+}
 
-// Add some spacing before the next section
-y += 5;
+// Move Y after the section
+y = startY + 4 * lineHeight + 10;
+
 
     // === PROJECT SUMMARY ===
     pdf.setTextColor(...primaryColor);

@@ -64,24 +64,41 @@ useEffect(() => {
   };
 
 // Inside Index.tsx
-const handleGenerateReport = (userInfo: {
+const handleGenerateReport = (customerInfo: {
   name: string;
   company: string;
   phone: string;
   email: string;
 }) => {
   const canvas = document.querySelector("canvas");
-  if (canvas) {
-    generateReport(
-      canvas,
-      placedMachines,
-      layoutDimensions,
-      globalAccessories,
-      globalSoftwares,
-      userInfo// wrap in array
-    );
+  if (!canvas) return;
+
+  if (!profile) {
+    console.error("Sales rep profile not loaded");
+    return;
   }
+
+  const salesRep = {
+    name: profile.name,
+    designation: profile.designation,
+    phone: profile.phone,
+    email: profile.email,
+    company: "Homag India Pvt. Ltd.",
+  };
+
+  generateReport(
+    canvas,
+    placedMachines,
+    layoutDimensions,
+    globalAccessories,
+    globalSoftwares,
+    customerInfo, // CUSTOMER
+    salesRep      // HOMAG SALES REP
+  );
 };
+
+
+
 const initials =
   profile?.name
     ?.split(" ")
