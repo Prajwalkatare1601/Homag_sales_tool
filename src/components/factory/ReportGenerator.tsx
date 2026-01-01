@@ -207,17 +207,16 @@ const totalProductivity =
 const roiPeriodYears =
   placedMachines.length > 0
     ? (() => {
-        // Total investment
-        const totalCapex = placedMachines.reduce(
-          (sum, m) => sum + Number(m.price_capex ?? 0),
-          0
-        );
+      const grandTotalCost =
+      totalMachineCapex  + totalOptionals + totalAccessories + totalSoftwares;
+
+       
         // Business rule:
         // 100 boards / shift → ₹2.25L profit / month
-        const monthlyProfit = (totalProductivity / 100) * 250000;
+        const monthlyProfit = (totalProductivity / 100) * 275000;
 
         // Breakeven in years
-        const breakevenYears = totalCapex / (monthlyProfit * 12 * 2);
+        const breakevenYears = grandTotalCost / (monthlyProfit * 12 * 2);
 
         return Math.round(breakevenYears * 10) / 10;
       })()
@@ -227,7 +226,7 @@ const roiPeriodYears =
 
 // === GRAND TOTAL ===
 const grandTotalCost =
-  totalMachineCapex + totalMachineOpex + totalOptionals + totalAccessories + totalSoftwares;
+  totalMachineCapex  + totalOptionals + totalAccessories + totalSoftwares;
 
 
 
@@ -248,8 +247,8 @@ const summaryData = [
   [
     "Total CapEx",
     `Rs.${totalMachineCapex.toLocaleString()}`,
-    "Est. OpEx (Annual)",
-    `Rs.${totalMachineOpex.toLocaleString()}`
+    "Est. OpEx (Monthly)",
+    `Rs.${Math.round(totalMachineOpex / 12).toLocaleString()} (Info only)`
   ],
 
   [
@@ -389,17 +388,6 @@ globalSoftwares.forEach((sw) => {
   ]);
 });
 
-// --- OPERATIONAL COST row ---
-const operationalCostValue = totalMachineOpex ?? 0; // make sure you have this value
-equipmentRows.push([
-  serial++,
-  "Miscellaneous",
-  "Operational Cost",
-  "-",
-  "-",
-  "-",
-  `Rs. ${operationalCostValue.toLocaleString()}`
-]);
 
 // Divider row
 equipmentRows.push(["", "", "", "", "", "", ""]);

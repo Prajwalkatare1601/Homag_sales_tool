@@ -120,6 +120,18 @@ const totalProductivity =
     0
   );
 
+  const totalAccessoriesCost = globalAccessories.reduce(
+  (sum, acc) => sum + Number(acc.price ?? 0) * Number(acc.qty ?? 1),
+  0
+);
+
+
+const totalSoftwareCost = globalSoftwares.reduce(
+  (sum, sw) => sum + Number(sw.price ?? 0) * Number(sw.qty ?? 1),
+  0
+);
+
+
   const totalHelpers = placedMachines.reduce(
     (sum, m) => sum + (m.helper_count ?? 0),
     0
@@ -176,21 +188,25 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
 const avgROI =
   placedMachines.length > 0
     ? (() => {
-        // Total investment
-        const totalCapex = placedMachines.reduce(
-          (sum, m) => sum + Number(m.price_capex ?? 0),
-          0
-        );
-        // Business rule:
-        // 100 boards / shift → ₹2.25L profit / month
-        const monthlyProfit = (totalProductivity / 100) * 250000;
+        // ✅ Total investment (CapEx + all additions)
+        const totalInvestment =
+          totalCapex +
+          totalOptionalsCost +
+          totalAccessoriesCost +
+          totalSoftwareCost;
 
-        // Breakeven in years
-        const breakevenYears = totalCapex / (monthlyProfit * 12 * 2);
+        // Business rule:
+        // 100 boards / shift → ₹2.75L profit / month
+        const monthlyProfit = (totalProductivity / 100) * 275000;
+
+        // ✅ Breakeven in years
+        const breakevenYears =
+          totalInvestment / (monthlyProfit * 12 * 2);
 
         return Math.round(breakevenYears * 10) / 10;
       })()
     : 0;
+
 
 
 
@@ -326,15 +342,38 @@ const avgROI =
     />
 
     <MetricCard 
-      title="OpEx (Annual)" 
-      value={totalOpex} 
-      icon={Coins} 
-      color="#FACC15" 
-    />
+  title="Accessories Cost" 
+  value={totalAccessoriesCost} 
+  icon={Package} 
+  color="#6366F1" 
+/>
+
+<MetricCard 
+  title="Software Cost" 
+  value={totalSoftwareCost} 
+  icon={FileText} 
+  color="#0EA5E9" 
+/>
+
+
+<MetricCard 
+  title="OpEx (Monthly)" 
+  value={Math.round(totalOpex / 12)} 
+  icon={Coins} 
+  color="#FACC15" 
+/>
+
+
+
 
     <MetricCard 
       title="Total Estimated Budget" 
-      value={totalCapex + totalOpex + totalOptionalsCost} 
+      value={
+  totalCapex +
+  totalOptionalsCost +
+  totalAccessoriesCost +
+  totalSoftwareCost
+}
       icon={Wallet} 
       color="#EAB308" 
     />
