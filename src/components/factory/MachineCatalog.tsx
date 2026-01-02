@@ -96,6 +96,15 @@ const [loadingSoftwares, setLoadingSoftwares] = useState<boolean>(false);
 const [openAccessoriesDrawer, setOpenAccessoriesDrawer] = useState(false);
 const [openSoftwareDrawer, setOpenSoftwareDrawer] = useState(false);
 
+const [customDialogOpen, setCustomDialogOpen] = useState(false);
+const [pendingCustomMachine, setPendingCustomMachine] = useState<Machine | null>(null);
+
+const [customWidth, setCustomWidth] = useState(3);   // meters
+const [customLength, setCustomLength] = useState(5); // meters
+
+const [customMachineName, setCustomMachineName] = useState("");
+
+
 type SelectedAccessory = Accessory & {
   qty: number;
 };
@@ -237,6 +246,8 @@ return (
                   <SelectItem value="Panel Dividing">Panel Dividing</SelectItem>
                   <SelectItem value="Edgeband">Edge Bander</SelectItem>
                   <SelectItem value="CNC drilling">CNC Machines</SelectItem>
+                  <SelectItem value="Custom Machine">Custom Machine</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
@@ -335,15 +346,27 @@ return (
                           Optionals
                         </button>
 
-                        <button
-                          className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMachineSelect(machine);
-                          }}
-                        >
-                          Add to Layout
-                        </button>
+<button
+  className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
+  onClick={(e) => {
+    e.stopPropagation();
+
+if (machine.type === "Custom Machine") {
+  setPendingCustomMachine(machine);
+  setCustomWidth(3);
+  setCustomLength(5);
+  setCustomMachineName(""); // ✅ reset
+  setCustomDialogOpen(true);
+  return;
+}
+
+
+    onMachineSelect(machine);
+  }}
+>
+  Add to Layout
+</button>
+
                       </div>
 
                     </div>
@@ -666,6 +689,76 @@ return (
           </DialogContent>
         </Dialog>
         <br />
+
+        <Dialog open={customDialogOpen} onOpenChange={setCustomDialogOpen}>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Custom Machine Dimensions</DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      
+      <div>
+        <label className="text-xs font-semibold text-slate-600">
+          Width (meters)
+        </label>
+        <input
+          type="number"
+          min={0.5}
+          step={0.1}
+          value={customWidth}
+          onChange={(e) => setCustomWidth(Number(e.target.value))}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold text-slate-600">
+          Length (meters)
+        </label>
+        <input
+          type="number"
+          min={0.5}
+          step={0.1}
+          value={customLength}
+          onChange={(e) => setCustomLength(Number(e.target.value))}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+
+    </div>
+
+    <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+      <Button
+        variant="outline"
+        onClick={() => setCustomDialogOpen(false)}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        onClick={() => {
+          if (!pendingCustomMachine) return;
+
+          const customMachine: Machine = {
+            ...pendingCustomMachine,
+            width_mm: customWidth * 1000,
+            length_mm: customLength * 1000,
+            isCustom: true,
+          };
+
+          onMachineSelect(customMachine);
+
+          setCustomDialogOpen(false);
+          setPendingCustomMachine(null);
+        }}
+      >
+        Add Machine
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+
       </div>
     </ScrollArea>
   </div>

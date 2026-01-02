@@ -76,6 +76,9 @@ export interface Machine {
   ROI?: number;
   connectedLoad?: number;
   airConsumption?: number;
+
+    /** UI-only: identifies user-defined machines */
+  isCustom?: boolean;
 }
 
 // ==========================
