@@ -697,7 +697,19 @@ if (machine.type === "Custom Machine") {
     </DialogHeader>
 
     <div className="space-y-4">
-      
+      <div>
+  <label className="text-xs font-semibold text-slate-600">
+    Machine Name
+  </label>
+  <input
+    type="text"
+    placeholder="Enter machine name"
+    value={customMachineName}
+    onChange={(e) => setCustomMachineName(e.target.value)}
+    className="w-full border rounded-md px-2 py-1 text-sm"
+  />
+</div>
+
       <div>
         <label className="text-xs font-semibold text-slate-600">
           Width (meters)
@@ -740,12 +752,13 @@ if (machine.type === "Custom Machine") {
         onClick={() => {
           if (!pendingCustomMachine) return;
 
-          const customMachine: Machine = {
-            ...pendingCustomMachine,
-            width_mm: customWidth * 1000,
-            length_mm: customLength * 1000,
-            isCustom: true,
-          };
+const customMachine: Machine = {
+  ...pendingCustomMachine,
+  machine_name: customMachineName || pendingCustomMachine.machine_name,
+  width_mm: customWidth * 1000,
+  length_mm: customLength * 1000,
+  isCustom: true,
+};
 
           onMachineSelect(customMachine);
 
