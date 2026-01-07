@@ -495,6 +495,29 @@ const workingAreaRect = new Rect({
   evented: false,
 });
 
+// --- Working space label ---
+const workingSpaceLabel = new Textbox(
+  "Working Space",
+  {
+    left: rectWidth / 2,
+
+    // 👇 Position near bottom of working area
+    top: rectHeight + bottomPx - 15,    width: rectWidth,
+    fontSize: 12,
+    fill: "#166534",
+    fontWeight: "bold",
+    textAlign: "center",
+    originX: "center",
+    originY: "top",
+    selectable: false,
+    evented: false,
+  }
+);
+
+// Optional: auto-scale to fit width
+autoScaleText(workingSpaceLabel, rectWidth);
+
+
 
 
   const nameLabel = new Textbox(machine.machine_name, {
@@ -570,6 +593,7 @@ if (productivityLabel) {
 const group = new Group(
   [
     workingAreaRect,
+    workingSpaceLabel, // 👈 ADD HERE
     machineRect,
     nameLabel,
     ...(productivityLabel ? [productivityLabel] : []),
@@ -587,6 +611,7 @@ const group = new Group(
     lockScalingY: true,
   }
 );
+
 (group as any).machineData = machine;
 (group as any).isCustomMachine = isCustomMachine; // ⭐ THIS WAS MISSING
 
@@ -637,6 +662,8 @@ const addCustomWorkingArea = (
     selectable: false,
     evented: false,
   });
+
+  
 
   // --- Label Text ---
   const areaLabel = new Text(label, {
