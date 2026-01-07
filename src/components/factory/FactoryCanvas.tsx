@@ -396,6 +396,8 @@ const drawGrid = (canvas: FabricCanvas) => {
 
 
 const addMachineToCanvas = (machine: Machine) => {
+  const machineType = machine.type?.toLowerCase() ?? "";
+
   console.log("ADDING MACHINE:", machine.machine_name, machine.isCustom);
 
   const isCustomMachine = machine.isCustom === true;
@@ -432,14 +434,53 @@ const WORKING_STROKE = isCustomMachine ? "#A855F7" : "#22c55e";
     evented: false,
   });
 
-const WORKING_AREA_MARGIN_M = 0.5;
-const workingMarginPx = WORKING_AREA_MARGIN_M * PIXELS_PER_METER;
+// ===============================
+// Working area margins (meters)
+// ===============================
+let marginTop = 0.5;
+let marginBottom = 0.5;
+let marginLeft = 0.5;
+let marginRight = 0.5;
 
-const workingWidth = rectWidth + workingMarginPx * 2;
-const workingHeight = rectHeight + workingMarginPx * 2;
+// Special rule: Panel Dividing machines
+if (machineType === "panel dividing") {
+  marginTop = 0.5;
+  marginLeft = 0.5;
+  marginRight = 0.5;
+  marginBottom = 3.0; // 👈 IMPORTANT
+}
+
+// Edge Bander rule
+if (machineType === "edgeband") {
+  marginTop = 3.0;
+  marginBottom = 3.0;
+  marginRight = 3.0;
+  marginLeft = 0.5;
+}
+
+if (
+  machineType === "cnc drilling"
+) {
+  marginTop = 0.5;
+  marginBottom = 0.5;
+  marginLeft = 0.5;
+  marginRight = 2; // 👈 key requirement
+}
+
+
+// Convert to pixels
+const topPx = marginTop * PIXELS_PER_METER;
+const bottomPx = marginBottom * PIXELS_PER_METER;
+const leftPx = marginLeft * PIXELS_PER_METER;
+const rightPx = marginRight * PIXELS_PER_METER;
+
+// Working area dimensions
+const workingWidth = rectWidth + leftPx + rightPx;
+const workingHeight = rectHeight + topPx + bottomPx;
+
 const workingAreaRect = new Rect({
-  left: -workingMarginPx,
-  top: -workingMarginPx,
+  left: -leftPx,          // 👈 left buffer
+  top: -topPx,            // 👈 top buffer
   width: workingWidth,
   height: workingHeight,
   fill: WORKING_FILL,
@@ -453,6 +494,7 @@ const workingAreaRect = new Rect({
   selectable: false,
   evented: false,
 });
+
 
 
   const nameLabel = new Textbox(machine.machine_name, {
@@ -586,8 +628,8 @@ const addCustomWorkingArea = (
     top: 0,
     width: widthPx,
     height: heightPx,
-    fill: "rgba(34,197,94,0.12)",
-    stroke: "#22c55e",
+    fill: "rgba(0, 213, 255, 0.12)",
+    stroke: "#091d20ff",
     strokeDashArray: [10, 6],
     strokeWidth: 2,
     rx: 10,

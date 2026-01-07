@@ -388,7 +388,15 @@ return (
 
                       {/* Actions */}
                       <div className="flex flex-col gap-1 shrink-0">
-                        
+                        <button
+                          className="text-[10px] px-3 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddOptionals(machine);
+                          }}
+                        >
+                          Optionals
+                        </button>
 
 <button
   className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
