@@ -26,14 +26,18 @@ import { toast } from "sonner";
   const isGroup = (obj: FabricObject): obj is Group => {
   return obj.type === "group";
   };
-  declare module "fabric" {
+declare module "fabric" {
   interface FabricObject {
     isGrid?: boolean;
     isDistanceLine?: boolean;
     isCollisionText?: boolean;
     machineData?: any;
+
+    // ✅ NEW
+    isCustomWorkingArea?: boolean;
   }
 }
+
 function autoScaleText(textObj:Textbox | Text, maxWidth: number) {
   const bounding = textObj.getBoundingRect().width;
 
@@ -124,7 +128,9 @@ const drawEdgeDistanceLines = (canvas: FabricCanvas) => {
     .filter((obj: any) => obj.isDistanceLine)
     .forEach(obj => canvas.remove(obj));
 
-  const objects = canvas.getObjects().filter((o: any) => o.machineData) as Group[];
+  const objects = canvas.getObjects().filter(
+    (o: any) => o.machineData && !o.isCustomWorkingArea
+  ) as Group[];
 
   for (let i = 0; i < objects.length; i++) {
     for (let j = i + 1; j < objects.length; j++) {
@@ -332,12 +338,20 @@ canvas.on("object:moving", (e) => {
 }, [dimensions, fabricCanvas]);
 
 
-  useEffect(() => {
-    if (selectedMachine && fabricCanvas) {
-      addMachineToCanvas(selectedMachine);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMachine, fabricCanvas]);
+useEffect(() => {
+  if (!selectedMachine || !fabricCanvas) return;
+
+  if (selectedMachine.type === "WORKING_AREA") {
+    addCustomWorkingArea(
+      (selectedMachine.width_mm ?? 4000) / 1000,
+      (selectedMachine.length_mm ?? 3000) / 1000,
+      selectedMachine.machine_name ?? "Working Area"
+    );
+  } else {
+    addMachineToCanvas(selectedMachine);
+  }
+}, [selectedMachine, fabricCanvas]);
+
 
   //
   // Draw grid
@@ -556,12 +570,76 @@ const group = new Group(
   toast.success(`${machine.machine_name} added to layout`);
 };
 
+const addCustomWorkingArea = (
+  widthMeters = 4,
+  heightMeters = 3,
+  label = "Working Area"
+) => {
+  if (!fabricCanvas) return;
+
+  const widthPx = widthMeters * PIXELS_PER_METER;
+  const heightPx = heightMeters * PIXELS_PER_METER;
+
+  // --- Working Area Rect ---
+  const areaRect = new Rect({
+    left: 0,
+    top: 0,
+    width: widthPx,
+    height: heightPx,
+    fill: "rgba(34,197,94,0.12)",
+    stroke: "#22c55e",
+    strokeDashArray: [10, 6],
+    strokeWidth: 2,
+    rx: 10,
+    ry: 10,
+    selectable: false,
+    evented: false,
+  });
+
+  // --- Label Text ---
+  const areaLabel = new Text(label, {
+    left: widthPx / 2,
+    top: heightPx / 2,
+    originX: "center",
+    originY: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+    fill: "#166534", // dark green
+    selectable: false,
+    evented: false,
+  });
+
+  // --- Group ---
+  const group = new Group([areaRect, areaLabel], {
+    left: 80,
+    top: 80,
+    hasControls: true,
+    hasBorders: true,
+    lockRotation: true,
+  });
+
+  // ✅ IMPORTANT FLAGS
+  (group as any).isCustomWorkingArea = true;
+
+  fabricCanvas.add(group);
+  fabricCanvas.setActiveObject(group);
+  fabricCanvas.requestRenderAll();
+
+  toast.success("Working area added");
+};
+
+
 
   //
   // Collision detection (uses bounding boxes)
   //
 const checkCollisions = (canvas: FabricCanvas) => {
-  const objects = canvas.getObjects().filter(obj => (obj as any).machineData);
+  const objects = canvas.getObjects().filter(
+    (obj) =>
+      (obj as any).machineData && !(obj as any).isCustomWorkingArea
+  );
+
+
 
   // Remove any existing collision text
   canvas.getObjects()
@@ -606,8 +684,13 @@ objects.forEach((obj) => {
   // Detect overlaps
   for (let i = 0; i < objects.length; i++) {
     for (let j = i + 1; j < objects.length; j++) {
-      const objA = objects[i];
-      const objB = objects[j];
+    const objA = objects[i];
+    const objB = objects[j];
+
+    // ✅ SAFETY CHECK
+    if ((objA as any).isCustomWorkingArea || (objB as any).isCustomWorkingArea) {
+      continue;
+    }
 
       const rA = objA.getBoundingRect();
       const rB = objB.getBoundingRect();

@@ -103,6 +103,10 @@ const [customWidth, setCustomWidth] = useState(3);   // meters
 const [customLength, setCustomLength] = useState(5); // meters
 
 const [customMachineName, setCustomMachineName] = useState("");
+const [workingAreaDialogOpen, setWorkingAreaDialogOpen] = useState(false);
+const [workingAreaWidth, setWorkingAreaWidth] = useState(4);   // meters
+const [workingAreaLength, setWorkingAreaLength] = useState(3); // meters
+const [workingAreaName, setWorkingAreaName] = useState("Buffer Space");
 
 
 type SelectedAccessory = Accessory & {
@@ -246,7 +250,7 @@ return (
                   <SelectItem value="Panel Dividing">Panel Dividing</SelectItem>
                   <SelectItem value="Edgeband">Edge Bander</SelectItem>
                   <SelectItem value="CNC drilling">CNC Machines</SelectItem>
-                  <SelectItem value="Custom Machine">Custom Machine</SelectItem>
+                  <SelectItem value="Custom Machine">Others</SelectItem>
 
                 </SelectContent>
               </Select>
@@ -254,6 +258,7 @@ return (
 
           </div>
         </div>
+
 
         {/* MACHINE LIST */}
         <div className="p-2">
@@ -263,6 +268,53 @@ return (
           <div className="h-[40vh] border rounded-md">
             <ScrollArea className="h-full">
               <div className="p-2 space-y-3">
+
+                {/* CUSTOM WORKING AREA – only for Custom Machine */}
+{solution === "Custom Machine" && (
+  <Card
+    className="p-3 rounded-xl border hover:shadow-md hover:bg-slate-50 transition-all"
+  >
+    <div className="flex items-center gap-3">
+
+      {/* Thumbnail (same size as machines) */}
+{/* Thumbnail – same as other machines */}
+<div className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 shrink-0">
+  <img
+    src="favicon.png"
+    alt="Homag"
+    className="object-contain w-8 h-8"
+  />
+</div>
+
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-xs break-words leading-snug">
+          Custom Space
+        </h3>
+
+      </div>
+
+      {/* Actions – SAME pattern as machine */}
+      <div className="flex flex-col gap-1 shrink-0">
+<button
+  className="text-[10px] px-3 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+  onClick={(e) => {
+    e.stopPropagation();
+    setWorkingAreaWidth(4);
+    setWorkingAreaLength(3);
+    setWorkingAreaDialogOpen(true);
+  }}
+>
+  Add to Layout
+</button>
+
+      </div>
+
+    </div>
+  </Card>
+)}
+
                 {loading ? (
                   <p className="text-center text-sm text-slate-500">Loading machines…</p>
                 ) : filteredMachines.length === 0 ? (
@@ -336,15 +388,7 @@ return (
 
                       {/* Actions */}
                       <div className="flex flex-col gap-1 shrink-0">
-                        <button
-                          className="text-[10px] px-3 py-1 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddOptionals(machine);
-                          }}
-                        >
-                          Optionals
-                        </button>
+                        
 
 <button
   className="text-[10px] px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
@@ -691,6 +735,87 @@ if (machine.type === "Custom Machine") {
         <br />
 
         <Dialog open={customDialogOpen} onOpenChange={setCustomDialogOpen}>
+
+{/* WORKING AREA DIALOG */}
+<Dialog
+  open={workingAreaDialogOpen}
+  onOpenChange={setWorkingAreaDialogOpen}
+>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Custom Working Space</DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <div>
+        <label className="text-xs font-semibold text-slate-600">
+          Working Area Name
+        </label>
+        <input
+          type="text"
+          value={workingAreaName}
+          onChange={(e) => setWorkingAreaName(e.target.value)}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold text-slate-600">
+          Width (meters)
+        </label>
+        <input
+          type="number"
+          min={0.5}
+          step={0.1}
+          value={workingAreaWidth}
+          onChange={(e) => setWorkingAreaWidth(Number(e.target.value))}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs font-semibold text-slate-600">
+          Length (meters)
+        </label>
+        <input
+          type="number"
+          min={0.5}
+          step={0.1}
+          value={workingAreaLength}
+          onChange={(e) => setWorkingAreaLength(Number(e.target.value))}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+    </div>
+
+    <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+      <Button
+        variant="outline"
+        onClick={() => setWorkingAreaDialogOpen(false)}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        onClick={() => {
+          onMachineSelect({
+            id: -999,
+            machine_name: workingAreaName || "Working Area", // ✅ FIXED
+            width_mm: workingAreaWidth * 1000,
+            length_mm: workingAreaLength * 1000,
+            isCustom: true,
+            type: "WORKING_AREA",
+          } as any);
+
+          setWorkingAreaDialogOpen(false);
+        }}
+      >
+        Add Working Area
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+
   <DialogContent className="max-w-sm">
     <DialogHeader>
       <DialogTitle>Custom Machine Dimensions</DialogTitle>
