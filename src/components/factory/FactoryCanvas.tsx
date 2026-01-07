@@ -379,8 +379,24 @@ const drawGrid = (canvas: FabricCanvas) => {
   //
   // Add a machine group to canvas. IMPORTANT: group origin set to left/top so left/top match bounding rect top-left.
   //
+
+
 const addMachineToCanvas = (machine: Machine) => {
-  
+  console.log("ADDING MACHINE:", machine.machine_name, machine.isCustom);
+
+  const isCustomMachine = machine.isCustom === true;
+
+// 🎨 Color palette
+const MACHINE_COLOR = isCustomMachine ? "#9333EA" : "#3B82F6"; // purple : blue
+const MACHINE_STROKE = isCustomMachine ? "#7E22CE" : "#1D4ED8";
+
+const WORKING_FILL = isCustomMachine
+  ? "rgba(168,85,247,0.15)"   // purple tint
+  : "rgba(34,197,94,0.15)";   // green (existing)
+
+const WORKING_STROKE = isCustomMachine ? "#A855F7" : "#22c55e";
+
+
   if (!fabricCanvas) return;
 
   const rectWidth = (machine.width_mm * PIXELS_PER_METER) / 1000;
@@ -391,9 +407,9 @@ const addMachineToCanvas = (machine: Machine) => {
     top: 0,
     width: rectWidth,
     height: rectHeight,
-    fill: "#3B82F6",
+    fill: MACHINE_COLOR,
     opacity: 0.85,
-    stroke: "#1D4ED8",
+    stroke: MACHINE_STROKE,
     strokeWidth: 2,
     rx: 4,
     originX: "left",
@@ -412,8 +428,8 @@ const workingAreaRect = new Rect({
   top: -workingMarginPx,
   width: workingWidth,
   height: workingHeight,
-  fill: "rgba(34,197,94,0.15)", // soft green
-  stroke: "#22c55e",
+  fill: WORKING_FILL,
+  stroke: WORKING_STROKE,
   strokeDashArray: [8, 6],
   strokeWidth: 2,
   rx: 8,
@@ -429,7 +445,7 @@ const workingAreaRect = new Rect({
     left: 6,
     top: 6,
     fontSize: 14,
-    fill: "#fff",
+    fill: isCustomMachine ? "#FDF4FF" : "#fff",
     fontWeight: "bold",
     originX: "left",
     originY: "top",
@@ -515,11 +531,12 @@ const group = new Group(
     lockScalingY: true,
   }
 );
+(group as any).machineData = machine;
+(group as any).isCustomMachine = isCustomMachine; // ⭐ THIS WAS MISSING
 
+(machineRect as any).isMachineBody = true;
+(workingAreaRect as any).isWorkingArea = true;
 
-  (group as any).machineData = machine;
-  (machineRect as any).isMachineBody = true;
-  (workingAreaRect as any).isWorkingArea = true;
 
 
   fabricCanvas.add(group);
@@ -557,22 +574,34 @@ const checkCollisions = (canvas: FabricCanvas) => {
 objects.forEach((obj) => {
   if (!isGroup(obj)) return;
 
+  const isCustom = (obj as any).isCustomMachine === true;
+
+  const MACHINE_COLOR = isCustom ? "#9333EA" : "#3B82F6";
+  const MACHINE_STROKE = isCustom ? "#7E22CE" : "#1D4ED8";
+
+  const WORKING_FILL = isCustom
+    ? "rgba(168,85,247,0.15)"
+    : "rgba(34,197,94,0.15)";
+
+  const WORKING_STROKE = isCustom ? "#A855F7" : "#22c55e";
+
   obj.getObjects().forEach((child) => {
     if ((child as any).isWorkingArea) {
       child.set({
-        stroke: "#22c55e",
-        fill: "rgba(34,197,94,0.15)",
+        stroke: WORKING_STROKE,
+        fill: WORKING_FILL,
       });
     }
 
     if ((child as any).isMachineBody) {
       child.set({
-        stroke: "#1D4ED8",
-        fill: "#3B82F6",
+        stroke: MACHINE_STROKE,
+        fill: MACHINE_COLOR,
       });
     }
   });
 });
+
 
   // Detect overlaps
   for (let i = 0; i < objects.length; i++) {
