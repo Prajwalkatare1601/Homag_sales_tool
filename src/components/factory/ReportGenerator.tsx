@@ -11,7 +11,9 @@ interface CustomerInfo {
   company: string;
   phone?: string;
   email: string;
+  includeROI: boolean; // ✅ NEW
 }
+
 
 interface SalesRepInfo {
   name: string;
@@ -205,22 +207,18 @@ const totalProductivity =
 
 // === ROI (Years) ===
 const roiPeriodYears =
-  placedMachines.length > 0
+  customerInfo.includeROI && placedMachines.length > 0
     ? (() => {
-      const grandTotalCost =
-      totalMachineCapex  + totalOptionals + totalAccessories + totalSoftwares;
+        const grandTotalCost =
+          totalMachineCapex + totalOptionals + totalAccessories + totalSoftwares;
 
-       
-        // Business rule:
-        // 100 boards / shift → ₹2.25L profit / month
         const monthlyProfit = (totalProductivity / 100) * 275000;
-
-        // Breakeven in years
         const breakevenYears = grandTotalCost / (monthlyProfit * 12 * 2);
 
         return Math.round(breakevenYears * 10) / 10;
       })()
-    : 0;
+    : null;
+
 
 
 
@@ -238,12 +236,22 @@ const summaryData = [
     "Floor Area",
     `${layoutDimensions.width}m x ${layoutDimensions.height}m (${layoutDimensions.width * layoutDimensions.height} m²)`
   ],
-    [
-    "Total Machine Area",
-    `${totalMachineArea.toFixed(2)} m²`,
-    "Estimated ROI Period",
-    `* ${roiPeriodYears} Years`
-  ],
+
+  // ✅ ROI row is conditional
+  ...(customerInfo.includeROI
+    ? [[
+        "Total Machine Area",
+        `${totalMachineArea.toFixed(2)} m²`,
+        "Estimated ROI Period",
+        `* ${roiPeriodYears} Years`
+      ]]
+    : [[
+        "Total Machine Area",
+        `${totalMachineArea.toFixed(2)} m²`,
+        "",
+        ""
+      ]]),
+
   [
     "Total CapEx",
     `Rs.${totalMachineCapex.toLocaleString()}`,
@@ -257,6 +265,7 @@ const summaryData = [
     "Accessories Cost",
     `Rs. ${totalAccessories.toLocaleString()}`
   ],
+
   [
     "Software Cost",
     `Rs. ${totalSoftwares.toLocaleString()}`,
@@ -264,6 +273,7 @@ const summaryData = [
     `** Rs. ${grandTotalCost.toLocaleString()}`
   ]
 ];
+
 
 
     autoTable(pdf, {
@@ -431,10 +441,15 @@ for (let i = 1; i <= pageCount; i++) {
   pdf.setFontSize(7);
   pdf.setTextColor(120, 120, 120); // lighter gray
 
-  const disclaimerLines = [
-    "* ROI calculations are based on the assumption that the machines operate for two shifts per day. Actual returns may vary depending on operating hours and production efficiency.",
-    "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. Final commercial terms shall be subject to formal quotation and applicable regulations.",
-  ];
+const disclaimerLines = [
+  ...(customerInfo.includeROI
+    ? [
+        "* ROI calculations are based on the assumption that the machines operate for two shifts per day. Actual returns may vary depending on operating hours and production efficiency.",
+      ]
+    : []),
+  "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. Final commercial terms shall be subject to formal quotation and applicable regulations.",
+];
+
 
   // Draw disclaimer lines starting at footerYStart
   disclaimerLines.forEach((line, idx) => {

@@ -27,7 +27,9 @@ interface UserInfo {
   company: string;
   phone: string;
   email: string;
+  includeROI: boolean;   // ✅ NEW
 }
+
 
 interface ProductivityMetricsProps {
   placedMachines: PlacedMachine[];
@@ -53,7 +55,9 @@ const [userInfo, setUserInfo] = useState({
   company: "",
   phone: "",
   email: "",
+  includeROI: false, // ✅ default OFF
 });
+
 
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setUserInfo(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -552,6 +556,18 @@ const avgROI =
           className="border rounded-md px-3 py-2"
         />
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-slate-600 mt-2">
+      <input
+        type="checkbox"
+        checked={userInfo.includeROI}
+        onChange={(e) =>
+          setUserInfo({ ...userInfo, includeROI: e.target.checked })
+        }
+      />
+      Include ROI metrics in report
+    </label>
+
 
       {/* Buttons */}
       <div className="flex justify-end gap-3 mt-4">
