@@ -99,13 +99,19 @@ if (placedMachines.length === 0 && globalAccessories.length === 0 && globalSoftw
     );
   }
 
+  // ❗ Exclude custom / buffer machines from calculations
+const calculationMachines = placedMachines.filter(
+  (m) => !m.isCustom
+);
+
+
   // === Core Calculations ===
-  const numMachines = placedMachines.length;
+const numMachines = calculationMachines.length;
 
 const totalProductivity =
   numMachines > 0
     ? Math.round(
-        placedMachines.reduce(
+        calculationMachines.reduce(
           (sum, m) =>
             sum +
             (
@@ -119,7 +125,7 @@ const totalProductivity =
 
 
 
-  const totalOperators = placedMachines.reduce(
+  const totalOperators = calculationMachines.reduce(
     (sum, m) => sum + (m.operator_count ?? 0),
     0
   );
@@ -136,33 +142,33 @@ const totalSoftwareCost = globalSoftwares.reduce(
 );
 
 
-  const totalHelpers = placedMachines.reduce(
+  const totalHelpers = calculationMachines.reduce(
     (sum, m) => sum + (m.helper_count ?? 0),
     0
   );
 
-  const totalConnectedLoad = placedMachines.reduce(
+  const totalConnectedLoad = calculationMachines.reduce(
     (sum, m) => sum + (m.connected_load_kw ?? 0),
     0
   );
 
-  const totalAirConsumption = placedMachines.reduce(
+  const totalAirConsumption = calculationMachines.reduce(
     (sum, m) => sum + (m.air_consumption_m3hr ?? 0),
     0
   );
 
-  const totalCapex = placedMachines.reduce(
+  const totalCapex = calculationMachines.reduce(
     (sum, m) => sum + (m.price_capex ?? 0),
     0
   );
 
-  const totalOpex = placedMachines.reduce(
+  const totalOpex = calculationMachines.reduce(
     (sum, m) => sum + (m.price_opex ?? 0),
     0
   );
 
   // === Total Optionals Cost ===
-const totalOptionalsCost = placedMachines.reduce((sum, m) => {
+const totalOptionalsCost = calculationMachines.reduce((sum, m) => {
   // If you stored optionalsCost directly
   if (m.optionalsCost) return sum + Number(m.optionalsCost);
 
@@ -178,7 +184,7 @@ const totalOptionalsCost = placedMachines.reduce((sum, m) => {
   return sum;
 }, 0);
 
-const totalMachineArea = placedMachines.reduce((sum, m) => {
+const totalMachineArea = calculationMachines.reduce((sum, m) => {
   const length = m.length_mm ?? 0;
   const width = m.width_mm ?? 0;
   return sum + length * width;
@@ -190,7 +196,7 @@ const totalMachineArea = placedMachines.reduce((sum, m) => {
 
   // === Derived Financials ===
 const avgROI =
-  placedMachines.length > 0
+  calculationMachines.length > 0
     ? (() => {
         // ✅ Total investment (CapEx + all additions)
         const totalInvestment =
@@ -406,7 +412,7 @@ const avgROI =
       <div>
         <p className="font-medium text-slate-700 mb-1">Machines</p>
         <ul className="space-y-1">
-          {placedMachines.map((m, idx) => (
+          {calculationMachines.map((m, idx) => (
             <li
               key={idx}
               className="bg-slate-100 rounded-md px-2 py-1 text-slate-700"
