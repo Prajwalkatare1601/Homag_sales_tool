@@ -573,6 +573,18 @@ const avgROI =
       />
       Include ROI metrics in report
     </label>
+      
+      <div className="mt-2">
+      <a
+        href="https://duerr-my.sharepoint.com/:f:/g/personal/ganesh_r_homag-group_com/IgB2ose2ckpzSLzp_CrzagAXAd9rL9yi8hOhLh8av3LVOoc?email=Prabhudev.Shivanaikar%40homag.com&e=9yEyck"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-blue-600 underline hover:text-blue-800"
+      >
+        Installation Checklist
+      </a>
+
+      </div>
 
 
       {/* Buttons */}
