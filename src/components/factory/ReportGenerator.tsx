@@ -442,13 +442,13 @@ for (let i = 1; i <= pageCount; i++) {
   pdf.setTextColor(120, 120, 120); // lighter gray
 
 const disclaimerLines = [
-  ...(customerInfo.includeROI
-    ? [
-        "* ROI calculations are based on the assumption that the machines operate for two shifts per day. Actual returns may vary depending on operating hours and production efficiency.",
-      ]
-    : []),
-  "** Prices mentioned are indicative estimates only and do not constitute a legally binding offer. Final commercial terms shall be subject to formal quotation and applicable regulations.",
+  "This Layout cum design Report generated (including any attachments) is confidential and may be privileged",
+  "This is intended for the use of its addressee only as a part Sales or Promotion of Business.",
+  "Any unauthorized use or dissemination of this Design cum Layout Reports in whole or in part is strictly prohibited.",
+  "The recipient should check this layout Reports and any attachments for the presence of viruses and cyber threats.", 
+  "Homag India shall not be liable for any improper or incomplete transmission of the information contained herein or damage to your system."
 ];
+
 
 
   // Draw disclaimer lines starting at footerYStart
