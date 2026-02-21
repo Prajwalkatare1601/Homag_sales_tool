@@ -135,7 +135,7 @@ if (customerInfo.phone) {
 // Seller info
 pdf.text(`Name: ${salesRep.name}`, rightX, startY);
 if (salesRep.designation) {
-  pdf.text(`Designation: ${salesRep.designation}`, rightX, startY + lineHeight);
+  pdf.text(`Department: ${salesRep.designation}`, rightX, startY + lineHeight);
 }
 if (salesRep.email) {
   pdf.text(`Email: ${salesRep.email}`, rightX, startY + 2 * lineHeight);
