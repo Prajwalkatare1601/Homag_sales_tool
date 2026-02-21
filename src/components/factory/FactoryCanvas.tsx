@@ -197,29 +197,37 @@ const displayDistance = unitIsMeters ? distanceMeters : distanceMeters * 3.28084
 
   // Fabric Group -> Cartesian bottom-left (returns in meters)
 const fabricToCartesian = (obj: Group) => {
-  const center = obj.getCenterPoint();
+  obj.setCoords();
+  const rect = obj.getBoundingRect();
+
   const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
 
-  const xMeters = center.x / PIXELS_PER_METER;
-  const yMeters = (canvasHeightPx - center.y) / PIXELS_PER_METER;
+  const xMeters = rect.left / PIXELS_PER_METER;
+  const yMeters =
+    (canvasHeightPx - (rect.top + rect.height)) / PIXELS_PER_METER;
 
   return {
-    x: Number(xMeters.toFixed(4)),
-    y: Number(yMeters.toFixed(4)),
+    x: Number(xMeters.toFixed(3)),
+    y: Number(yMeters.toFixed(3)),
   };
 };
 
   // Cartesian bottom-left (meters) -> Fabric left/top values for the group's position
   // Note: this uses the group's current bounding box height (transformed) so placement is correct
  // (xMeters, yMeters) represent the CENTER of the machine
-const cartesianToFabric = (xMeters: number, yMeters: number) => {
-  const centerX = xMeters * PIXELS_PER_METER;
+const cartesianToFabric = (xMeters: number, yMeters: number, obj: Group) => {
+  obj.setCoords();
+  const rect = obj.getBoundingRect();
+
   const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
-  const centerY = canvasHeightPx - yMeters * PIXELS_PER_METER;
 
-  return { centerX, centerY };
+  const leftPx = xMeters * PIXELS_PER_METER;
+  const bottomPx = yMeters * PIXELS_PER_METER;
+
+  const topPx = canvasHeightPx - bottomPx - rect.height;
+
+  return { leftPx, topPx };
 };
-
 
 
 
@@ -796,65 +804,44 @@ objects.forEach((obj) => {
   //
   // When inputs change: place group so its bottom-left matches user coords.
   //
-const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
+const handleCartesianMove = (axis: "x" | "y", value: number) => {
   if (!selectedObject || !fabricCanvas || !isFabricGroup(selectedObject)) return;
 
-  const metersValue = convertToMeters(inputValue);
+  const metersValue = convertToMeters(value);
 
-  // -------------------------
-  // 1. Compute target position
-  // -------------------------
-  const targetX = axis === "x" ? metersValue : machineX;
-  const targetY = axis === "y" ? metersValue : machineY;
+  selectedObject.setCoords();
+  const rect = selectedObject.getBoundingRect();
 
-  // -------------------------
-  // 2. Clamp to factory bounds
-  // -------------------------
-selectedObject.setCoords();
-const bounding = selectedObject.getBoundingRect();
+  let x = machineX;
+  let y = machineY;
 
-const halfW = bounding.width / PIXELS_PER_METER / 2;
-const halfH = bounding.height / PIXELS_PER_METER / 2;
+  if (axis === "x") x = metersValue;
+  if (axis === "y") y = metersValue;
 
-  const maxX = dimensions.width - halfW;
-  const maxY = dimensions.height - halfH;
+  const canvasWidth = dimensions.width;
+  const canvasHeight = dimensions.height;
 
-  const clampedX = Math.min(Math.max(targetX, halfW), maxX);
-  const clampedY = Math.min(Math.max(targetY, halfH), maxY);
+  const maxX = canvasWidth - rect.width / PIXELS_PER_METER;
+  const maxY = canvasHeight - rect.height / PIXELS_PER_METER;
 
-  const isClamped = clampedX !== targetX || clampedY !== targetY;
+  const clampedX = Math.min(Math.max(x, 0), maxX);
+  const clampedY = Math.min(Math.max(y, 0), maxY);
 
-  if (isClamped) {
-    toast.error("Out of bounds — machine center must stay inside factory.");
-  }
+  const { leftPx, topPx } = cartesianToFabric(clampedX, clampedY, selectedObject);
+selectedObject.setPositionByOrigin(
+  new Point(leftPx, topPx),
+  "left",
+  "top"
+);
 
-  // -------------------------
-  // 3. Convert Cart → Fabric
-  // -------------------------
-  const { centerX, centerY } = cartesianToFabric(clampedX, clampedY);
+  selectedObject.setCoords();
+  fabricCanvas.requestRenderAll();
 
-  // Only move if changed
-  const prev = selectedObject.getCenterPoint();
-  if (prev.x !== centerX || prev.y !== centerY) {
-    selectedObject.setPositionByOrigin(
-      new Point(centerX, centerY),
-      "center",
-      "center"
-    );
-    selectedObject.setCoords();
-    fabricCanvas.requestRenderAll();
-  }
-
-  // -------------------------
-  // 4. Update state + run checks
-  // -------------------------
   setMachineX(clampedX);
   setMachineY(clampedY);
 
   checkCollisions(fabricCanvas);
   updatePlacedMachines();
-
-  return { x: clampedX, y: clampedY, clamped: isClamped };
 };
 
 
@@ -944,6 +931,8 @@ const halfH = bounding.height / PIXELS_PER_METER / 2;
             <Input
               id="width"
               type="number"
+              step="0.1"
+
               value={convertFromMeters(dimensions.width)}
               onChange={(e) =>
                 setDimensions((prev) => ({
@@ -962,6 +951,7 @@ const halfH = bounding.height / PIXELS_PER_METER / 2;
             <Input
               id="height"
               type="number"
+              step="0.1"
               value={convertFromMeters(dimensions.height)}
               onChange={(e) =>
                 setDimensions((prev) => ({
