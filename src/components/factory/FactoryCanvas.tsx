@@ -983,7 +983,7 @@ selectedObject.setPositionByOrigin(
               <Label className="text-xs">X</Label>
               <Input
                 type="number"
-                value={convertFromMeters(machineX)}
+                value={Number(convertFromMeters(machineX).toFixed(useMeters ? 1 : 1))}                 
                 onChange={(e) => handleCartesianMove("x", Number(e.target.value))}
                 className="w-20 text-xs py-1"
               />
@@ -991,7 +991,7 @@ selectedObject.setPositionByOrigin(
               <Label className="text-xs">Y</Label>
               <Input
                 type="number"
-                value={convertFromMeters(machineY)}
+                value={Number(convertFromMeters(machineY).toFixed(useMeters ? 1 : 1))}                 
                 onChange={(e) => handleCartesianMove("y", Number(e.target.value))}
                 className="w-20 text-xs py-1"
               />
