@@ -128,7 +128,7 @@ const handleRegister = async (e: React.FormEvent) => {
             <label className="text-sm font-medium text-slate-700">Email</label>
             <Input
               type="email"
-              placeholder="you@homag.in"
+              placeholder="you@homag.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

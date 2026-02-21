@@ -11,7 +11,6 @@ interface CustomerInfo {
   company: string;
   phone?: string;
   email: string;
-  includeROI: boolean; // ✅ NEW
 }
 
 
@@ -205,19 +204,6 @@ const totalProductivity =
       )
     : 0;
 
-// === ROI (Years) ===
-const roiPeriodYears =
-  customerInfo.includeROI && placedMachines.length > 0
-    ? (() => {
-        const grandTotalCost =
-          totalMachineCapex + totalOptionals + totalAccessories + totalSoftwares;
-
-        const monthlyProfit = (totalProductivity / 100) * 275000;
-        const breakevenYears = grandTotalCost / (monthlyProfit * 12 * 2);
-
-        return Math.round(breakevenYears * 10) / 10;
-      })()
-    : null;
 
 
 
@@ -236,22 +222,6 @@ const summaryData = [
     "Floor Area",
     `${layoutDimensions.width}m x ${layoutDimensions.height}m (${layoutDimensions.width * layoutDimensions.height} m²)`
   ],
-
-  // ✅ ROI row is conditional
-  ...(customerInfo.includeROI
-    ? [[
-        "Total Machine Area",
-        `${totalMachineArea.toFixed(2)} m²`,
-        "Estimated ROI Period",
-        `* ${roiPeriodYears} Years`
-      ]]
-    : [[
-        "Total Machine Area",
-        `${totalMachineArea.toFixed(2)} m²`,
-        "",
-        ""
-      ]]),
-
   [
     "Total CapEx",
     `Rs.${totalMachineCapex.toLocaleString()}`,

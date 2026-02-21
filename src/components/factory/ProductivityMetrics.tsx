@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { generateReport } from "@/components/factory/ReportGenerator";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 
 
 
@@ -72,6 +70,12 @@ const handleSubmit = () => {
   // === Email Validation ===  
   if (!userInfo.email.includes("@") || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInfo.email)) {
     alert("Please enter a valid email address");
+    return;
+  }
+
+    // Phone validation (must be exactly 10 digits)
+  if (!/^\d{10}$/.test(userInfo.phone)) {
+    alert("Phone number must contain exactly 10 digits");
     return;
   }
 
@@ -531,7 +535,7 @@ const avgROI =
 {showUserForm && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
     <div className="bg-white rounded-lg shadow-lg w-96 p-6 relative">
-      <h2 className="text-lg font-semibold mb-4">Enter Customer Details</h2>
+      <h2 className="text-lg font-semibold mb-4">👤 Enter Customer Details </h2>
 
       <div className="flex flex-col gap-3">
         <input
@@ -550,20 +554,18 @@ const avgROI =
           onChange={handleChange}
           className="border rounded-md px-3 py-2"
         />
-<PhoneInput
-  country={"in"}
-  enableSearch={true}
-  value={userInfo.phone}
-  onChange={(value) => {
-    // Remove spaces, hyphens, parentheses, etc
-    const cleaned = value.replace(/[^\d+]/g, "");
-    setUserInfo({ ...userInfo, phone: cleaned });
-  }}
-  inputClass="!w-full !py-2 !px-3 !text-sm !rounded-md !border !border-slate-300"
-  buttonClass="!border !border-slate-300 !rounded-l-md"
-  containerClass="!w-full"
-  dropdownClass="!z-[9999]"
-/>
+        <input
+          type="tel"
+          name="phone"
+          placeholder="Phone Number (10 digits)"
+          value={userInfo.phone}
+          onChange={(e) => {
+            const onlyDigits = e.target.value.replace(/\D/g, ""); // allow digits only
+            setUserInfo(prev => ({ ...prev, phone: onlyDigits }));
+          }}
+          maxLength={10}
+          className="border rounded-md px-3 py-2"
+        />
 
 
         <input
@@ -575,18 +577,6 @@ const avgROI =
           className="border rounded-md px-3 py-2"
         />
       </div>
-
-      <label className="flex items-center gap-2 text-sm text-slate-600 mt-2">
-      <input
-        type="checkbox"
-        checked={userInfo.includeROI}
-        onChange={(e) =>
-          setUserInfo({ ...userInfo, includeROI: e.target.checked })
-        }
-      />
-      Include ROI metrics in report
-    </label>
-
 
       {/* Buttons */}
       <div className="flex justify-end gap-3 mt-4">
