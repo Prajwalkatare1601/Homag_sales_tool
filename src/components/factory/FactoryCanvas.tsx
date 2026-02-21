@@ -196,24 +196,24 @@ const displayDistance = unitIsMeters ? distanceMeters : distanceMeters * 3.28084
 
 
   // Fabric Group -> Cartesian bottom-left (returns in meters)
-  const fabricToCartesian = (obj: Group) => {
-    // getBoundingRect returns axis-aligned bounding box in canvas px
-    const rect = obj.getBoundingRect(); // no args for Fabric v6
-    const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
+const fabricToCartesian = (obj: Group) => {
+  const center = obj.getCenterPoint();
+  const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
 
-    const xMeters = rect.left / PIXELS_PER_METER;
-    const yMeters = (canvasHeightPx - (rect.top + rect.height)) / PIXELS_PER_METER;
+  const xMeters = center.x / PIXELS_PER_METER;
+  const yMeters = (canvasHeightPx - center.y) / PIXELS_PER_METER;
 
-    return { x: Number(xMeters.toFixed(4)), y: Number(yMeters.toFixed(4)) };
+  return {
+    x: Number(xMeters.toFixed(4)),
+    y: Number(yMeters.toFixed(4)),
   };
+};
 
   // Cartesian bottom-left (meters) -> Fabric left/top values for the group's position
   // Note: this uses the group's current bounding box height (transformed) so placement is correct
  // (xMeters, yMeters) represent the CENTER of the machine
 const cartesianToFabric = (xMeters: number, yMeters: number) => {
   const centerX = xMeters * PIXELS_PER_METER;
-
-  // Convert bottom-left Cartesian → Fabric (top-left origin)
   const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
   const centerY = canvasHeightPx - yMeters * PIXELS_PER_METER;
 
@@ -275,14 +275,15 @@ canvas.on("object:moving", (e) => {
   const obj = e.target;
   if (!obj) return;
 
-  // 1. get CENTER
+  obj.setCoords(); // VERY IMPORTANT in v6
+
+  const bounding = obj.getBoundingRect();
+
+  const halfW = bounding.width / 2;
+  const halfH = bounding.height / 2;
+
   const center = obj.getCenterPoint();
 
-  // 2. use scaled size (rotation-independent)
-  const halfW = obj.getScaledWidth() / 2;
-  const halfH = obj.getScaledHeight() / 2;
-
-  // 3. clamp center
   const minX = halfW;
   const minY = halfH;
   const maxX = canvas.getWidth() - halfW;
@@ -291,11 +292,9 @@ canvas.on("object:moving", (e) => {
   center.x = Math.min(Math.max(center.x, minX), maxX);
   center.y = Math.min(Math.max(center.y, minY), maxY);
 
-  // 4. move object based on center
   obj.setPositionByOrigin(center, "center", "center");
   obj.setCoords();
 
-  // 5. your existing logic
   if (isFabricGroup(obj) && obj === selectedObject) {
     const { x, y } = fabricToCartesian(obj);
     setMachineX(x);
@@ -307,10 +306,11 @@ canvas.on("object:moving", (e) => {
 });
 
 
-
-    canvas.on("object:rotating", () => {checkCollisions(canvas);
-      drawEdgeDistanceLines(canvas)
-    });
+    canvas.on("object:rotating", () => {
+  selectedObject?.setCoords();
+  checkCollisions(canvas);
+  drawEdgeDistanceLines(canvas);
+});
     canvas.on("object:scaling", () => checkCollisions(canvas));
 
     return () => {
@@ -600,10 +600,10 @@ const group = new Group(
     dimensionLabel,
   ],
   {
-    left: 50,
-    top: 50,
-    originX: "left",
-    originY: "top",
+    left: 50 + workingWidth / 2,
+    top: 50 + workingHeight / 2,
+    originX: "center",
+    originY: "center",
     hasControls: true,
     hasBorders: true,
     lockScalingFlip: true,
@@ -761,15 +761,10 @@ objects.forEach((obj) => {
       continue;
     }
 
-      const rA = objA.getBoundingRect();
-      const rB = objB.getBoundingRect();
-
-      const isOverlap = !(
-        rA.left + rA.width < rB.left ||
-        rA.left > rB.left + rB.width ||
-        rA.top + rA.height < rB.top ||
-        rA.top > rB.top + rB.height
-      );
+      const isOverlap =
+  objA.intersectsWithObject(objB) ||
+  objA.isContainedWithinObject(objB) ||
+  objB.isContainedWithinObject(objA);
 
       if (isOverlap) {
         collisionDetected = true;
@@ -815,8 +810,11 @@ const handleCartesianMove = (axis: "x" | "y", inputValue: number) => {
   // -------------------------
   // 2. Clamp to factory bounds
   // -------------------------
-  const halfW = selectedObject.getScaledWidth() / PIXELS_PER_METER / 2;
-  const halfH = selectedObject.getScaledHeight() / PIXELS_PER_METER / 2;
+selectedObject.setCoords();
+const bounding = selectedObject.getBoundingRect();
+
+const halfW = bounding.width / PIXELS_PER_METER / 2;
+const halfH = bounding.height / PIXELS_PER_METER / 2;
 
   const maxX = dimensions.width - halfW;
   const maxY = dimensions.height - halfH;
