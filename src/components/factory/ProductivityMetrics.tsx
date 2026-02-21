@@ -388,13 +388,6 @@ const avgROI =
       color="#EAB308" 
     />
 
-    <MetricCard 
-      title="Estimated ROI Period *" 
-      value={`${avgROI.toFixed(1)} years`} 
-      icon={TrendingUp} 
-      color="#059669" 
-    />
-
   </div>
 </div>
 
@@ -433,7 +426,7 @@ const avgROI =
                 key={idx}
                 className="bg-indigo-50 text-indigo-700 rounded-md px-2 py-1"
               >
-                {opt.optional_name} – ₹{opt.price}
+                {opt.optional_name} - ₹{opt.price}
               </li>
             ))
           ) : (
@@ -487,6 +480,26 @@ const avgROI =
 </Card>
 
 
+{/* === Installation Checklist === */}
+<Card className="border border-slate-200 shadow-sm bg-gradient-to-br from-white to-slate-50">
+  <div className="flex items-center gap-3 p-3">
+    <div className="p-2 rounded-md bg-indigo-50">
+      <FileText className="h-5 w-5 text-indigo-700" />
+    </div>
+
+    <div className="flex flex-col">
+
+      <a
+        href="https://duerr-my.sharepoint.com/:f:/g/personal/ganesh_r_homag-group_com/IgB2ose2ckpzSLzp_CrzagAXAd9rL9yi8hOhLh8av3LVOoc?email=Prabhudev.Shivanaikar%40homag.com&e=9yEyck"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-semibold text-indigo-700 hover:underline"
+      >
+        SALES DATA - One Drive
+      </a>
+    </div>
+  </div>
+</Card>
 
 
 
@@ -573,18 +586,6 @@ const avgROI =
       />
       Include ROI metrics in report
     </label>
-      
-      <div className="mt-2">
-      <a
-        href="https://duerr-my.sharepoint.com/:f:/g/personal/ganesh_r_homag-group_com/IgB2ose2ckpzSLzp_CrzagAXAd9rL9yi8hOhLh8av3LVOoc?email=Prabhudev.Shivanaikar%40homag.com&e=9yEyck"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm text-blue-600 underline hover:text-blue-800"
-      >
-        Installation Checklist
-      </a>
-
-      </div>
 
 
       {/* Buttons */}

@@ -20,7 +20,7 @@ const handleRegister = async (e: React.FormEvent) => {
   setLoading(true);
 
   // Email validation
-  if (!email.toLowerCase().endsWith("@homag.com")) {
+  if (!email.toLowerCase().endsWith("homag.com")) {
     toast.error("Only @homag.com email addresses are allowed.");
     setLoading(false);
     return;
