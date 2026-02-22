@@ -169,20 +169,37 @@ const initials =
 </div>
 
   {/* Dropdown Menu */}
-  {userMenuOpen && (
-    <div className="absolute right-0 mt-10 w-32 bg-white rounded-lg shadow-lg border border-slate-200 z-20">
-      <button
-        className="flex items-center gap-2 px-4 py-2 w-full text-left text-slate-700 hover:bg-slate-100"
-        onClick={() => {
-          console.log("Logging out...");
-          // Clear session and redirect
-          localStorage.removeItem("isAuthenticated");
-          navigate("/", { replace: true });        }}
-      >
-        <LogOut className="h-4 w-4" /> Logout
-      </button>
-    </div>
-  )}
+{userMenuOpen && (
+  <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 z-50">
+
+    {/* Change Password */}
+    <button
+      className="flex items-center gap-2 px-4 py-2 w-full text-left text-slate-700 hover:bg-slate-100"
+      onClick={() => {
+        setUserMenuOpen(false);
+        navigate("/change-password");
+      }}
+    >
+      🔒 Change Password
+    </button>
+
+    {/* Logout */}
+    <button
+      className="flex items-center gap-2 px-4 py-2 w-full text-left text-slate-700 hover:bg-slate-100"
+      onClick={async () => {
+        setUserMenuOpen(false);
+
+        await supabase.auth.signOut(); // Proper logout
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("userProfile");
+
+        navigate("/", { replace: true });
+      }}
+    >
+      <LogOut className="h-4 w-4" /> Logout
+    </button>
+  </div>
+)}
 </div>
 </header>
 

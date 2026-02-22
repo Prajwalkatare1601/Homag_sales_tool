@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import ChangePassword from "./pages/ChangePassword";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route path="/change-password" element={<ChangePassword />} />
 
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
