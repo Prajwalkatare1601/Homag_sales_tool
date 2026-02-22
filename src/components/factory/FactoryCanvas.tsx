@@ -809,41 +809,49 @@ const handleCartesianMove = (axis: "x" | "y", value: number) => {
 
   const metersValue = convertToMeters(value);
 
+  let bottomLeftX = machineX;
+  let bottomLeftY = machineY;
+
+  if (axis === "x") bottomLeftX = metersValue;
+  if (axis === "y") bottomLeftY = metersValue;
+
   selectedObject.setCoords();
   const rect = selectedObject.getBoundingRect();
 
-  let x = machineX;
-  let y = machineY;
+  const halfWidthMeters = (rect.width / PIXELS_PER_METER) / 2;
+  const halfHeightMeters = (rect.height / PIXELS_PER_METER) / 2;
 
-  if (axis === "x") x = metersValue;
-  if (axis === "y") y = metersValue;
+  const maxBottomLeftX = dimensions.width - (rect.width / PIXELS_PER_METER);
+  const maxBottomLeftY = dimensions.height - (rect.height / PIXELS_PER_METER);
 
-  const canvasWidth = dimensions.width;
-  const canvasHeight = dimensions.height;
+  const clampedBottomLeftX = Math.min(Math.max(bottomLeftX, 0), maxBottomLeftX);
+  const clampedBottomLeftY = Math.min(Math.max(bottomLeftY, 0), maxBottomLeftY);
 
-  const maxX = canvasWidth - rect.width / PIXELS_PER_METER;
-  const maxY = canvasHeight - rect.height / PIXELS_PER_METER;
+  // Convert bottom-left → center
+  const centerX = (clampedBottomLeftX + halfWidthMeters) * PIXELS_PER_METER;
 
-  const clampedX = Math.min(Math.max(x, 0), maxX);
-  const clampedY = Math.min(Math.max(y, 0), maxY);
+  const canvasHeightPx = dimensions.height * PIXELS_PER_METER;
 
-  const { leftPx, topPx } = cartesianToFabric(clampedX, clampedY, selectedObject);
-selectedObject.setPositionByOrigin(
-  new Point(leftPx, topPx),
-  "left",
-  "top"
-);
+  const centerY =
+    canvasHeightPx -
+    ((clampedBottomLeftY + halfHeightMeters) * PIXELS_PER_METER);
+
+  selectedObject.setPositionByOrigin(
+    new Point(centerX, centerY),
+    "center",
+    "center"
+  );
 
   selectedObject.setCoords();
   fabricCanvas.requestRenderAll();
 
-  setMachineX(clampedX);
-  setMachineY(clampedY);
+  // 🔥 IMPORTANT: store bottom-left in state
+  setMachineX(clampedBottomLeftX);
+  setMachineY(clampedBottomLeftY);
 
   checkCollisions(fabricCanvas);
   updatePlacedMachines();
 };
-
 
 
   //
