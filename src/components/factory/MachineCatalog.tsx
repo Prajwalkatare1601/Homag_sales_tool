@@ -55,6 +55,14 @@ import { Check } from "lucide-react";
 
 
 interface MachineCatalogProps {
+  segment: string;
+  solution: string;
+  capacity: string;
+  automation: string;
+  setSegment: (val: string) => void;
+  setSolution: (val: string) => void;
+  setCapacity: (val: string) => void;
+  setAutomation: (val: string) => void;
   onMachineSelect: (machine: Machine) => void;
   onGlobalAccessoriesChange?: (accessories: Accessory[]) => void;
   onGlobalSoftwaresChange?: (softwares: Software[]) => void;
@@ -63,14 +71,19 @@ interface MachineCatalogProps {
 
 
 export const MachineCatalog = ({
+  segment,
+  solution,
+  capacity,
+  automation,
+  setSegment,
+  setSolution,
+  setCapacity,
+  setAutomation,
   onMachineSelect,
   onGlobalAccessoriesChange,
-  onGlobalSoftwaresChange, // ✅ add here
-}: MachineCatalogProps) =>{
-  const [segment, setSegment] = useState("Kitchen");
-  const [solution, setSolution] = useState("Panel Dividing");
-  const [capacity, setCapacity] = useState("");
-  const [automation, setAutomation] = useState("");
+  onGlobalSoftwaresChange,
+}: MachineCatalogProps) => {
+
 
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);

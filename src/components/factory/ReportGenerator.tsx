@@ -29,7 +29,13 @@ export const generateReport = async (
   globalAccessories: any[],
   globalSoftwares: any[],
   customerInfo: CustomerInfo,
-  salesRep: SalesRepInfo // New: HOMAG sales rep
+  salesRep: SalesRepInfo,
+  filters: {
+    segment: string;
+    solution: string;
+    capacity: string;
+    automation: string;
+  }
 ) => {
   try {
     toast.loading("Generating professional report...");
@@ -62,7 +68,14 @@ const formatPhoneForPDF = (phone: string) => {
   return `${parsed.country} (+${parsed.countryCallingCode}) ${parsed.nationalNumber}`;
 };
 
+// === Load Logo ===
+const logo = new Image();
+logo.src = "/homag_logo.jpg";
 
+// Wait until logo loads
+await new Promise((resolve) => {
+  logo.onload = resolve;
+});
 
     const pdf = new jsPDF({
       orientation: "portrait",
@@ -79,7 +92,13 @@ const formatPhoneForPDF = (phone: string) => {
     // Blue strip
     pdf.setFillColor(...primaryColor);
     pdf.rect(0, 0, 210, 25, "F");
-
+// Add Company Logo (top right)
+pdf.addImage(
+  logo,
+  "PNG",
+  160, 4,   // X, Y position
+  40, 16    // Width, Height
+);
     // Title
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(18);
@@ -89,7 +108,7 @@ const formatPhoneForPDF = (phone: string) => {
     // Subtitle / Date
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 200, 16, { align: "right" });
+    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 200, 23, { align: "right" });
 
 let y = 35;
 
@@ -148,7 +167,6 @@ if (salesRep.phone) {
 // Move Y after the section
 y = startY + 4 * lineHeight + 10;
 
-
     // === PROJECT SUMMARY ===
     pdf.setTextColor(...primaryColor);
     pdf.setFontSize(12);
@@ -161,6 +179,36 @@ y = startY + 4 * lineHeight + 10;
     pdf.line(10, y + 2, 200, y + 2);
 
     y += 10;
+
+// Market Data Content
+pdf.setFontSize(10);
+pdf.setTextColor(...textGray);
+
+// Segment
+pdf.setFont("helvetica", "bold");
+pdf.text("Segment:", 10, y);
+pdf.setFont("helvetica", "normal");
+pdf.text(` ${filters.segment || "-"}`, 26, y);
+
+// Solution
+pdf.setFont("helvetica", "bold");
+pdf.text("Solution:", 55, y);
+pdf.setFont("helvetica", "normal");
+pdf.text(` ${filters.solution || "-"}`, 70, y);
+
+// Capacity
+pdf.setFont("helvetica", "bold");
+pdf.text("Capacity / Shift:", 97, y);
+pdf.setFont("helvetica", "normal");
+pdf.text(` ${filters.capacity || "-"}`, 123, y);
+
+// Automation
+pdf.setFont("helvetica", "bold");
+pdf.text("Automation Level:", 142, y);
+pdf.setFont("helvetica", "normal");
+pdf.text(` ${filters.automation || "-"}`, 173, y);
+
+y += 10;
 
     // Summary Grid
 // CAPEX / OPEX
@@ -403,13 +451,12 @@ const pageMargin = 8;          // Left/right margin
 const footerYStart = 275;      // Starting Y position for disclaimer
 const lineSpacing = 4.5;       // Space between lines
 
-for (let i = 1; i <= pageCount; i++) {
-  pdf.setPage(i);
+// ✅ ONLY FIRST PAGE DISCLAIMER
+pdf.setPage(1);
 
-  // Disclaimer section (appears above confidential)
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7);
-  pdf.setTextColor(120, 120, 120); // lighter gray
+pdf.setFont("helvetica", "normal");
+pdf.setFontSize(7);
+pdf.setTextColor(120, 120, 120);
 
 const disclaimerLines = [
   "This Layout cum design Report generated (including any attachments) is confidential and may be privileged",
@@ -419,26 +466,28 @@ const disclaimerLines = [
   "Homag India shall not be liable for any improper or incomplete transmission of the information contained herein or damage to your system."
 ];
 
+disclaimerLines.forEach((line, idx) => {
+  pdf.text(line, pageMargin, footerYStart + lineSpacing * idx);
+});
 
+// Confidential + Page Numbers (ALL pages)
+for (let i = 1; i <= pageCount; i++) {
+  pdf.setPage(i);
 
-  // Draw disclaimer lines starting at footerYStart
-  disclaimerLines.forEach((line, idx) => {
-    pdf.text(line, pageMargin, footerYStart + lineSpacing * idx);
-  });
+  const confidentialY = footerYStart + lineSpacing * disclaimerLines.length + 2;
 
-  // Company / Confidential (below disclaimer)
-  const confidentialY = footerYStart + lineSpacing * disclaimerLines.length + 2; // small gap after disclaimer
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
-  pdf.setTextColor(100, 100, 100); // Dark gray
+  pdf.setTextColor(100, 100, 100);
   pdf.text("Confidential - Homag India Pvt. Ltd.", pageMargin, confidentialY);
 
-  // Page number (right-aligned, same line as confidential)
   pdf.setFontSize(8);
   pdf.setTextColor(150, 150, 150);
-  pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.getWidth() - pageMargin, confidentialY, {
-    align: "right",
-  });
+  pdf.text(`Page ${i} of ${pageCount}`,
+    pdf.internal.pageSize.getWidth() - pageMargin,
+    confidentialY,
+    { align: "right" }
+  );
 }
 
 

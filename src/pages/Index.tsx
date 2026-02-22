@@ -14,6 +14,10 @@ import supabase from "../supabase/server";
 
 
 const Index = () => {
+  const [segment, setSegment] = useState("Kitchen");
+  const [solution, setSolution] = useState("Panel Dividing");
+  const [capacity, setCapacity] = useState("50-100");
+  const [automation, setAutomation] = useState("Manual");
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [placedMachines, setPlacedMachines] = useState<PlacedMachine[]>([]);
   const [layoutDimensions] = useState({ width: 30, height: 20 });
@@ -93,7 +97,13 @@ const handleGenerateReport = (customerInfo: {
     globalAccessories,
     globalSoftwares,
     customerInfo, // CUSTOMER
-    salesRep      // HOMAG SALES REP
+    salesRep,
+      {
+    segment,
+    solution,
+    capacity,
+    automation,
+  }      // HOMAG SALES REP
   );
 };
 
@@ -207,9 +217,17 @@ const initials =
                 Machine Catalog
               </h2>
 <MachineCatalog
+  segment={segment}
+  solution={solution}
+  capacity={capacity}
+  automation={automation}
+  setSegment={setSegment}
+  setSolution={setSolution}
+  setCapacity={setCapacity}
+  setAutomation={setAutomation}
   onMachineSelect={handleMachineSelect}
   onGlobalAccessoriesChange={setGlobalAccessories}
-  onGlobalSoftwaresChange={setGlobalSoftwares}  // <-- new
+  onGlobalSoftwaresChange={setGlobalSoftwares}
 />
 
             </div>
